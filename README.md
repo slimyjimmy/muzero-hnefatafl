@@ -7,6 +7,17 @@
 
 ![ci-testing workflow](https://github.com/werner-duvaud/muzero-general/workflows/CI%20testing/badge.svg)
 
+# Running MuZero (by Djimon)
+1. Virtual environment
+   1. 'python3.10 -m venv venv'
+   2. 'source venv/bin/activate'
+2. 'pip install setuptools==65.5.0 pip==21'
+3. 'pip install wheel==0.38.0'
+4. 'cd muzero-general'
+5. 'pip install -r requirements.lock'
+6. 'python3 muzero.py'
+
+
 # MuZero General
 
 A commented and [documented](https://github.com/werner-duvaud/muzero-general/wiki/MuZero-Documentation) implementation of MuZero based on the Google DeepMind [paper](https://arxiv.org/abs/1911.08265) (Schrittwieser et al., Nov 2019) and the associated [pseudocode](https://arxiv.org/src/1911.08265v2/anc/pseudocode.py).
