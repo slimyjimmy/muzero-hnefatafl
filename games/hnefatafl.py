@@ -8,7 +8,6 @@ import torch
 
 from .abstract_game import AbstractGame
 
-
 class MuZeroConfig:
     def __init__(self):
         # fmt: off
@@ -130,6 +129,14 @@ class Position:
         self.x = x
         self.y = y
 
+    def __eq__(self, other):
+        if not isinstance(other, Position):
+            return False
+        return self.x == other.x and self.y == other.y
+
+    def __hash__(self):
+        return hash((self.x, self.y))
+
     def up(self) -> "Position":
         return Position(self.x + 1, self.y)
 
@@ -141,6 +148,11 @@ class Position:
 
     def down(self) -> "Position":
         return Position(self.x - 1, self.y)
+
+    def to_string(self) -> str:
+        return f"({self.x}, {self.y})"
+
+Move = Tuple[Position, Position]
 
 
 class Game(AbstractGame):
@@ -213,30 +225,30 @@ class Game(AbstractGame):
         action = 0
         while True:
             try:
-                print("Enter the start position of the piece you wish to move:")
+                print(f"Enter the start position of the *{self.env.current_player.to_string()}* piece you wish to move:")
                 start_row = int(
                     input(
-                        f"Enter the row (1 - 7) to play for the player {self.to_play()}: "
+                        f"Enter the row (0 - 6) to play for the player {self.to_play()}: "
                     )
                 )
                 start_col = int(
                     input(
-                        f"Enter the column (1 - 7) to play for the player {self.to_play()}: "
+                        f"Enter the column (0 - 6) to play for the player {self.to_play()}: "
                     )
                 )
-                start_pos = Position(start_row - 1, start_col - 1)
+                start_pos = Position(start_row, start_col)
                 print("Enter the end position of the piece you wish to move:")
                 end_row = int(
                     input(
-                        f"Enter the row (1 - 7) to play for the player {self.to_play()}: "
+                        f"Enter the row (0 - 6) to play for the player {self.to_play()}: "
                     )
                 )
                 end_col = int(
                     input(
-                        f"Enter the column (1 - 7) to play for the player {self.to_play()}: "
+                        f"Enter the column (0 - 6) to play for the player {self.to_play()}: "
                     )
                 )
-                end_pos = Position(end_row - 1, end_col - 1)
+                end_pos = Position(end_row, end_col)
                 
                 if not (
                     # action in self.legal_actions() and
@@ -251,7 +263,7 @@ class Game(AbstractGame):
                 ):
                     print("Wrong move buddy")
                 else:
-                    action = self.env.move_to_action(start_pos, end_pos)
+                    action = self.env.move_to_action((start_pos, end_pos))
                     break
             except Exception as e:
                 print("Error kp")
@@ -280,9 +292,8 @@ class Game(AbstractGame):
         Returns:
             String representing the action.
         """
-        row = action_number // 3 + 1
-        col = action_number % 3 + 1
-        return f"Play row {row}, column {col}"
+        start_pos, end_pos = self.env.action_to_move(action_number)
+        return f"{start_pos.to_string()} -> {end_pos.to_string()}"
 
 
 class GameResult(Enum):
@@ -294,6 +305,14 @@ class GameResult(Enum):
 class PlayerRole(Enum):
     DEFENDER = 1
     ATTACKER = -1
+
+    def to_string(self) -> str:
+        if self == PlayerRole.DEFENDER:
+            return "Defender"
+        return "Attacker"
+    
+    def toggle(self):
+        return PlayerRole(self.value * -1)
 
 
 class PieceType(Enum):
@@ -307,7 +326,7 @@ class PieceType(Enum):
         if self == PieceType.ATTACKER:
             return "🗡️"
         if self == PieceType.KING:
-            return "🤴"
+            return "K"
 
 class Piece:
     def __init__(self, piece_type: PieceType, position: Position):
@@ -395,25 +414,25 @@ class Hnefatafl:
         self.board = Hnefatafl.DEFAULT_BOARD.copy()
         self.player_role = role
         self.current_player = PlayerRole.ATTACKER
-        self.king = Position(3, 3)
+        self.king = Piece(PieceType.KING, Position(3, 3))
+        self.attackers: List[Position] = self.__get_attackers()
+        self.defenders: List[Position] = self.__get_defenders()
 
-    """
-    def __get_attackers(self, board):
+    def __get_attackers(self):
         attackers = []
         for i in range(Hnefatafl.DIMENSION):
             for j in range(Hnefatafl.DIMENSION):
-                if board[i, j] == PieceType.ATTACKER:
-                    attackers.append(board[i, j])
+                if self.board[i][j] == PieceType.ATTACKER:
+                    attackers.append(Position(i, j))
         return attackers
 
-    def __get_defenders(self, board):
+    def __get_defenders(self):
         defenders = []
         for i in range(Hnefatafl.DIMENSION):
             for j in range(Hnefatafl.DIMENSION):
-                if board[i, j] == PieceType.DEFENDER:
-                    defenders.append(board[i, j])
+                if self.board[i][j] == PieceType.DEFENDER:
+                    defenders.append(Position(i, j))
         return defenders
-    """
 
     def to_play(self):
         return 0 if self.player_role == 1 else 1
@@ -438,34 +457,41 @@ class Hnefatafl:
                     observation[2, i, j] = 1
         return observation
 
-    def get_possible_moves(self):
+    def get_possible_dests_from_pos(self, start_pos: Position) -> List[Position]:
+        moves: List[Position] = []
+        if self.square_belongs_to_current_player(self.board[start_pos.x][start_pos.y]):
+            # move left
+            k = 1
+            while start_pos.x - k >= 0 and self.board[start_pos.x - k][start_pos.y] is None:
+                moves.append(Position(start_pos.x - k, start_pos.y))
+                k += 1
+            # move right
+            k = 1
+            while start_pos.x + k < Hnefatafl.DIMENSION and self.board[start_pos.x + k][start_pos.y] is None:
+                moves.append(Position(start_pos.x + k, start_pos.y))
+                k += 1
+            # move up
+            k = 1
+            while start_pos.y + k < Hnefatafl.DIMENSION and self.board[start_pos.x][start_pos.y + k] is None:
+                moves.append(Position(start_pos.x, start_pos.y + k))
+                k += 1
+            # move down
+            k = 1
+            while start_pos.y - k >= 0 and self.board[start_pos.x][start_pos.y - k] is None:
+                moves.append(Position(start_pos.x, start_pos.y - k))
+                k += 1
+        return moves
+
+    def get_possible_moves(self) -> List[Move]:
         """
         Returns a list of possible moves for the current player.
         """
-        moves: List[Tuple[Position, Position]] = []  # start_pos, end_pos
+        moves: List[Move] = []  # start_pos, end_pos
         for i in range(Hnefatafl.DIMENSION):
             for j in range(Hnefatafl.DIMENSION):
-                if self.square_belongs_to_current_player(self.board[i][j]):
-                    # move left
-                    k = 1
-                    while j - k >= 0 and self.board[i][j - k] is None:
-                        moves.append((Position(i, j), Position(i, j - k)))
-                        k += 1
-                    # move right
-                    k = 1
-                    while j + k < Hnefatafl.DIMENSION and self.board[i][j + k] is None:
-                        moves.append((Position(i, j), Position(i, j + k)))
-                        k += 1
-                    # move up
-                    k = 1
-                    while i + k < Hnefatafl.DIMENSION and self.board[i + k][j] is None:
-                        moves.append((Position(i, j), Position(i + k, j)))
-                        k += 1
-                    # move down
-                    k = 1
-                    while i - k >= 0 and  self.board[i - k][j] is None:
-                        moves.append((Position(i, j), Position(i - k, j)))
-                        k += 1
+                possible_moves_from_pos = self.get_possible_dests_from_pos(Position(i, j))
+                for end_pos in possible_moves_from_pos:
+                    moves.append((Position(i, j), end_pos))
         return moves
 
     def square_belongs_to_current_player(self, piece: Optional[PieceType]) -> bool:
@@ -493,22 +519,22 @@ class Hnefatafl:
         if len(self.get_possible_moves()) == 0:
             return GameResult.DRAW, None
         # All Defenders Are Eliminated
-        for defender in self.defenders:
-            if not defender.captured:
-                return GameResult.ONGOING, None
+        if len(self.defenders) == 0:
             return GameResult.WIN, PlayerRole.ATTACKER
         return GameResult.ONGOING, None
 
     def move_to_action(
-        self, start_pos: Position, end_pos: Position) -> int:
+        self, move: Move) -> int:
         """
         Encode the action as an integer.
         """
+        start_pos = move[0]
+        end_pos = move[1]
         _from = start_pos.x * Hnefatafl.DIMENSION + start_pos.y
         _to = end_pos.x * Hnefatafl.DIMENSION + end_pos.y
         return _from * Hnefatafl.DIMENSION**2 + _to
 
-    def action_to_move(self, action: int) -> Tuple[Position, Position]:
+    def action_to_move(self, action: int) -> Move:
         """
         Decode the action from an integer into start_pos and end_pos.
         """
@@ -521,128 +547,145 @@ class Hnefatafl:
         reward = 0
         # check if action is legal
         move = self.action_to_move(action)
-        possible_moves = self.get_possible_moves()
-        if possible_moves.count == 0:
+        possible_dests = self.get_possible_dests_from_pos(move[0])
+        if len(possible_dests) == 0:
             # current_player loses
+            print("No possible moves")
             reward += Hnefatafl.LOSS_REWARD
             return self.board, reward, True
-        if move not in possible_moves:
+        start_pos, end_pos = move
+        if end_pos not in possible_dests:
+            print("Invalid move")
+            print(f"tried move: {move[0].to_string()} -> {move[1].to_string()}")
+            print(f"possible moves: {len(possible_dests)}")
             reward += Hnefatafl.INVALID_ACTION_REWARD
             return self.board, reward, False
-        start_pos, end_pos = move
-        self.board[start_pos] = None
-        piece = self.board[start_pos]
-        piece.position = end_pos
-        self.board[end_pos] = piece
+        
+        piece = self.board[start_pos.x][start_pos.y]
+        self.board[start_pos.x][start_pos.y] = None
+        # piece.position = end_pos
+        self.board[end_pos.x][end_pos.y] = piece
+        print(f"Player {self.current_player} moved {piece.to_string()} from {start_pos.to_string()} to {end_pos.to_string()}")
 
         # check if moved piece captures an opponent
         # 1. up
         if (
             end_pos.y <= Hnefatafl.DIMENSION - 3
-            and self.is_opponent(self.board[end_pos.up()])
-            and not self.is_opponent(self.board[end_pos.up().up()])
+            and self.is_opponent(self.board[end_pos.x][end_pos.y + 1])
+            and not self.is_opponent(self.board[end_pos.x][end_pos.y + 2])
         ):
             # piece above captured
+            print("Piece above captured")
             # self.board[end_pos.up()].captured = True
-            self.board[end_pos.up()] = None
+            self.board[end_pos.x][end_pos.y + 1] = None
             reward += Hnefatafl.CAPTURE_REWARD
         # 2. down
         if (
             end_pos.y >= 2
-            and self.is_opponent(self.board[end_pos.down()])
-            and not self.is_opponent(self.board[end_pos.down().down()])
+            and self.is_opponent(self.board[end_pos.x][end_pos.y - 1])
+            and not self.is_opponent(self.board[end_pos.x][end_pos.y - 2])
         ):
             # piece below captured
+            print("Piece below captured")
             # self.board[end_pos.down()].captured = True
-            self.board[end_pos.down()] = None
+            self.board[end_pos.x][end_pos.y - 1] = None
             reward += Hnefatafl.CAPTURE_REWARD
         # 3. left
         if (
             end_pos.x >= 2
-            and self.is_opponent(self.board[end_pos.left()])
-            and not self.is_opponent(self.board[end_pos.left().left()])
+            and self.is_opponent(self.board[end_pos.x - 1][end_pos.y])
+            and not self.is_opponent(self.board[end_pos.x - 2][end_pos.y])
         ):
             # piece to left captured
+            print("Piece to left captured")
             #vself.board[end_pos.left()].captured = True
-            self.board[end_pos.left()] = None
+            self.board[end_pos.x - 1][end_pos.y] = None
             reward += Hnefatafl.CAPTURE_REWARD
         # 4. right
         if (
             end_pos.x <= Hnefatafl.DIMENSION - 3
-            and self.is_opponent(self.board[end_pos.right()])
-            and not self.is_opponent(self.board[end_pos.right().right()])
+            and self.is_opponent(self.board[end_pos.x + 1][end_pos.y])
+            and not self.is_opponent(self.board[end_pos.x + 2][end_pos.y])
         ):
             # piece to right captured
-            self.board[end_pos.right()].captured = True
-            self.board[end_pos.right()] = None
+            print("Piece to right captured")
+            # self.board[end_pos.].captured = True
+            self.board[end_pos.x + 1][end_pos.y] = None
             reward += Hnefatafl.CAPTURE_REWARD
 
         # check if moved piece itself is captured
         # 1. horizontally
         if end_pos.x >= 1 and end_pos.x <= Hnefatafl.DIMENSION - 2:
-            if self.is_opponent(self.board[end_pos.right()]) and self.is_opponent(
-                self.board[end_pos.left()]
+            if self.is_opponent(self.board[end_pos.x + 1][end_pos.y]) and self.is_opponent(
+                self.board[end_pos.x - 1][end_pos.y]
             ):
-                self.board[end_pos].captured = True
-                self.board[end_pos] = None
+                # self.board[end_pos].captured = True
+                print("Piece itself captured")
+                self.board[end_pos.x][end_pos.y] = None
                 reward += Hnefatafl.CAPTURED_REWARD
         # 2. vertically
         if end_pos.y >= 1 and end_pos.y <= Hnefatafl.DIMENSION - 2:
-            if self.is_opponent(self.board[end_pos.up()]) and self.is_opponent(
-                self.board[end_pos.down()]
+            if self.is_opponent(self.board[end_pos.x][end_pos.y + 1]) and self.is_opponent(
+                self.board[end_pos.x][end_pos.y - 1]
             ):
-                self.board[end_pos].captured = True
-                self.board[end_pos] = None
+                # self.board[end_pos].captured = True
+                print("Piece itself captured")
+                self.board[end_pos.x][end_pos.y] = None
                 reward += Hnefatafl.CAPTURED_REWARD
 
         # check if moved piece captures the king
         # 1. king is on the throne
         if self.king.position == Position(3, 3):
             if (
-                self.board[2, 3] == PieceType.ATTACKER
-                and self.board[3, 2] == PieceType.ATTACKER
-                and self.board[4, 3] == PieceType.ATTACKER
-                and self.board[3, 4] == PieceType.ATTACKER
+                self.board[2][3] == PieceType.ATTACKER
+                and self.board[3][2] == PieceType.ATTACKER
+                and self.board[4][3] == PieceType.ATTACKER
+                and self.board[3][4] == PieceType.ATTACKER
             ):
                 self.king.captured = True
-                self.board[3, 3] = None
+                self.board[3][3] = None
+                print("King captured")
         # 2. king is next to the throne
         # 2.1 above
         if self.king.position == Position(3, 3).up():
             if (
-                self.board[self.king.position.up()] == PieceType.ATTACKER
-                and self.board[self.king.position.left()] == PieceType.ATTACKER
-                and self.board[self.king.position.right()] == PieceType.ATTACKER
+                self.board[self.king.position.x][self.king.position.y + 1] == PieceType.ATTACKER
+                and self.board[self.king.position.x - 1][self.king.position.y] == PieceType.ATTACKER
+                and self.board[self.king.position.x + 1][self.king.position.y] == PieceType.ATTACKER
             ):
                 self.king.captured = True
-                self.board[3, 3] = None
+                self.board[3][3] = None
+                print("King captured")
         # 2.2 below
         if self.king.position == Position(3, 3).down():
             if (
-                self.board[self.king.position.down()] == PieceType.ATTACKER
-                and self.board[self.king.position.left()] == PieceType.ATTACKER
-                and self.board[self.king.position.right()] == PieceType.ATTACKER
+                self.board[self.king.position.x][self.king.position.y - 1] == PieceType.ATTACKER
+                and self.board[self.king.position.x - 1][self.king.position.y] == PieceType.ATTACKER
+                and self.board[self.king.position.x + 1][self.king.position.y] == PieceType.ATTACKER
             ):
                 self.king.captured = True
-                self.board[3, 3] = None
+                self.board[3][3] = None
+                print("King captured")
         # 2.3 to the left
         if self.king.position == Position(3, 3).left():
             if (
-                self.board[self.king.position.left()] == PieceType.ATTACKER
-                and self.board[self.king.position.up()] == PieceType.ATTACKER
-                and self.board[self.king.position.down()] == PieceType.ATTACKER
+                self.board[self.king.position.x - 1][self.king.position.y] == PieceType.ATTACKER
+                and self.board[self.king.position.x][self.king.position.y + 1] == PieceType.ATTACKER
+                and self.board[self.king.position.x][self.king.position.y - 1] == PieceType.ATTACKER
             ):
                 self.king.captured = True
-                self.board[3, 3] = None
+                self.board[3][3] = None
+                print("King captured")
         # 2.4 to the right
         if self.king.position == Position(3, 3).right():
             if (
-                self.board[self.king.position.right()] == PieceType.ATTACKER
-                and self.board[self.king.position.up()] == PieceType.ATTACKER
-                and self.board[self.king.position.down()] == PieceType.ATTACKER
+                self.board[self.king.position.x + 1][self.king.position.y] == PieceType.ATTACKER
+                and self.board[self.king.position.x][self.king.position.y + 1] == PieceType.ATTACKER
+                and self.board[self.king.position.x][self.king.position.y - 1] == PieceType.ATTACKER
             ):
                 self.king.captured = True
-                self.board[3, 3] = None
+                self.board[3][3] = None
+                print("King captured")
 
         # check if the game is over
         game_result, player = self.game_over()
@@ -652,23 +695,35 @@ class Hnefatafl:
                 reward += Hnefatafl.WIN_REWARD
             else:
                 reward += Hnefatafl.LOSS_REWARD
-        self.current_player *= -1
+        self.current_player = self.current_player.toggle()
+
+        self.attackers = self.__get_attackers()
+        self.defenders = self.__get_defenders()
 
         return self.board, reward, done
 
-    def is_opponent(self, piece: Piece) -> bool:
+    def is_opponent(self, piece_type: PieceType) -> bool:
+        if piece_type is None:
+            return False
+
         if self.current_player == PlayerRole.DEFENDER:
-            return piece.piece_type == PieceType.ATTACKER
+            return piece_type == PieceType.ATTACKER
         return (
-            piece.piece_type == PieceType.DEFENDER or piece.piece_type == PieceType.KING
+            piece_type == PieceType.DEFENDER or piece_type == PieceType.KING
         )
 
     def render(self):
+        # Print column numbers as the header
+        col_numbers = "  " + "   ".join(f"{col}" for col in range(Hnefatafl.DIMENSION))
+        print(col_numbers)
+
         for i in range(Hnefatafl.DIMENSION):
             print("+---" * Hnefatafl.DIMENSION + "+")  # Top border of the row
             row_str = "|"
             for j in range(Hnefatafl.DIMENSION):
                 cell = self.board[i][j].to_string() if self.board[i][j] else " "  # Use piece or empty space
                 row_str += f" {cell} |"
+                if j == Hnefatafl.DIMENSION - 1:
+                    row_str += f" {i}"
             print(row_str)
         print("+---" * Hnefatafl.DIMENSION + "+")
