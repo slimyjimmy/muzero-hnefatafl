@@ -730,18 +730,15 @@ class Hnefatafl:
             reward += Hnefatafl.CAPTURE_REWARD
 
         # check if moved piece captures the king
-        # 1. king is on the throne
-        if self.king.position == Hnefatafl.MIDDLE:
-            if (
-                Hnefatafl.MIDDLE.up().get_square(self.board) == PieceType.ATTACKER
-                and Hnefatafl.MIDDLE.left().get_square(self.board) == PieceType.ATTACKER
-                and Hnefatafl.MIDDLE.right().get_square(self.board)
-                == PieceType.ATTACKER
-                and Hnefatafl.MIDDLE.down().get_square(self.board) == PieceType.ATTACKER
-            ):
-                print("King captured")
-                self.king.captured = True
-                Hnefatafl.MIDDLE.set_square(self.board, None)
+        if (
+            Hnefatafl.MIDDLE.up().get_square(self.board) == PieceType.ATTACKER
+            and Hnefatafl.MIDDLE.left().get_square(self.board) == PieceType.ATTACKER
+            and Hnefatafl.MIDDLE.right().get_square(self.board) == PieceType.ATTACKER
+            and Hnefatafl.MIDDLE.down().get_square(self.board) == PieceType.ATTACKER
+        ):
+            print("King captured")
+            self.king.captured = True
+            Hnefatafl.MIDDLE.set_square(self.board, None)
         # 2. king is next to the throne
         # 2.1 above
         if self.king.position == Hnefatafl.MIDDLE.up():
