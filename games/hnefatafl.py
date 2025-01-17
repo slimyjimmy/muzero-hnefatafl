@@ -662,7 +662,7 @@ class Hnefatafl:
                 and self.king.position != Hnefatafl.MIDDLE
             ):
                 return True
-        if maybe_captured.get_square(self.baord) == PieceType.ATTACKER:
+        if maybe_captured.get_square(self.board) == PieceType.ATTACKER:
             if other_side == Hnefatafl.MIDDLE:
                 return True
         return False
