@@ -174,6 +174,10 @@ class Position:
     ):
         board[self.y][self.x] = piece
 
+    def is_within_board(self) -> bool:
+        """Checks if a position is on the board"""
+        return 0 <= self.x < Hnefatafl.DIMENSION and 0 <= self.y < Hnefatafl.DIMENSION
+
     def is_open_to_piece(self, piece: PieceType) -> bool:
         """
         Checks if a position is
@@ -186,10 +190,7 @@ class Position:
             print("Piece is none")
             return False
 
-        is_within_board = (
-            0 <= self.x < Hnefatafl.DIMENSION and 0 <= self.y < Hnefatafl.DIMENSION
-        )
-        if not is_within_board:
+        if not self.is_within_board():
             return False
         if self in Hnefatafl.RESTRICTED_POSITIONS:
             return piece == PieceType.KING  # only king can enter restricted squares
@@ -631,6 +632,68 @@ class Hnefatafl:
         x1, y1 = _to // Hnefatafl.DIMENSION, _to % Hnefatafl.DIMENSION
         return (Position(x0, y0), Position(x1, y1))
 
+    def piece_captured(
+        self, new_pos: Position, maybe_captured: Position, other_side: Position
+    ) -> bool:
+        if not new_pos.is_within_board():
+            return False
+        if not maybe_captured.is_within_board():
+            return False
+        if not other_side.is_within_board():
+            return False
+        if not self.is_opponent(maybe_captured.get_square(self.board)):
+            return False
+        if maybe_captured.get_square(self.board) == PieceType.KING:
+            return False  # king can't be captured by two pieces
+
+        # to capture maybe_captured, other_side can either be
+        # - a piece belonging to current_player
+        # - a hostile field
+        #     - a corner
+        #     - maybe_captured is defender -> empty throne
+        #     - maybe_captured is attacker -> throne
+        if self.belongs_to_me(other_side.get_square(self.board)):
+            return True
+        if other_side in Hnefatafl.CORNERS:
+            return True
+        if maybe_captured.get_square(self.board) == PieceType.DEFENDER:
+            if (
+                other_side == Hnefatafl.MIDDLE
+                and self.king.position != Hnefatafl.MIDDLE
+            ):
+                return True
+        if maybe_captured.get_square(self.baord) == PieceType.ATTACKER:
+            if other_side == Hnefatafl.MIDDLE:
+                return True
+        return False
+
+    def piece_captures_opponent(self, end_pos: Position) -> Optional[Position]:
+        """
+        Returns position of captured opponent if the piece moved to its new position `end_pos`captures an opponent.
+        Returns None otherwise.
+        """
+        if self.piece_captured(
+            new_pos=end_pos, maybe_captured=end_pos.up(), other_side=end_pos.up(2)
+        ):
+            return end_pos.up()
+
+        if self.piece_captured(
+            new_pos=end_pos, maybe_captured=end_pos.down(), other_side=end_pos.down(2)
+        ):
+            return end_pos.down()
+
+        if self.piece_captured(
+            new_pos=end_pos, maybe_captured=end_pos.left(), other_side=end_pos.left(2)
+        ):
+            return end_pos.left()
+
+        if self.piece_captured(
+            new_pos=end_pos, maybe_captured=end_pos.right(), other_side=end_pos.right(2)
+        ):
+            return end_pos.right()
+
+        return None
+
     def step(self, action):
         reward = 0
         # check if action is legal
@@ -661,72 +724,10 @@ class Hnefatafl:
             f"Player {self.current_player} moved {piece.to_string()} from {start_pos.to_string()} to {end_pos.to_string()}"
         )
 
-        # TODO: empty restricted piece can also capture opponent
-        # check if moved piece captures an opponent
-        # 1. up
-        if (
-            end_pos.y <= Hnefatafl.DIMENSION - 3
-            and self.is_opponent(end_pos.up().get_square(self.board))
-            and not self.king.position
-            == end_pos.up()  # king can't be captured by two attackers
-            and self.belongs_to_me(end_pos.up(2).get_square(self.board))
-        ):
-            # piece above captured
-            print("Piece above captured")
-            end_pos.up().set_square(self.board, None)
+        capture_res = self.piece_captures_opponent(end_pos)
+        if not capture_res is None:
+            capture_res.set_square(self.board, None)
             reward += Hnefatafl.CAPTURE_REWARD
-        # 2. down
-        if (
-            end_pos.y >= 2
-            and self.is_opponent(end_pos.down().get_square(self.board))
-            and not self.king.position
-            == end_pos.down()  # king can't be captured by two attackers
-            and self.belongs_to_me(end_pos.down(2).get_square(self.board))
-        ):
-            # piece below captured
-            print("Piece below captured")
-            end_pos.down().set_square(self.board, None)
-            reward += Hnefatafl.CAPTURE_REWARD
-        # 3. left
-        if (
-            end_pos.x >= 2
-            and self.is_opponent(end_pos.left().get_square(self.board))
-            and not self.king.position
-            == end_pos.left()  # king can't be captured by two attackers
-            and self.belongs_to_me(end_pos.left(2).get_square(self.board))
-        ):
-            # piece to left captured
-            print("Piece to left captured")
-            end_pos.left().set_square(self.board, None)
-            reward += Hnefatafl.CAPTURE_REWARD
-        # 4. right
-        if (
-            end_pos.x <= Hnefatafl.DIMENSION - 3
-            and self.is_opponent(end_pos.right().get_square(self.board))
-            and not self.king.position
-            == end_pos.right()  # king can't be captured by two attackers
-            and self.belongs_to_me(end_pos.right(2).get_square(self.board))
-        ):
-            # piece to right captured
-            print("Piece to right captured")
-            end_pos.right().set_square(self.board, None)
-            reward += Hnefatafl.CAPTURE_REWARD
-
-        """
-        # check if moved piece itself is captured
-        # 1. horizontally
-        if end_pos.x >= 1 and end_pos.x <= Hnefatafl.DIMENSION - 2:
-            if self.is_opponent(end_pos.right().get_square(self.board)) and self.is_opponent(end_pos.left().get_square(self.board)):
-                print("Piece itself captured")
-                end_pos.set_square(self.board, None)
-                reward += Hnefatafl.CAPTURED_REWARD
-        # 2. vertically
-        if end_pos.y >= 1 and end_pos.y <= Hnefatafl.DIMENSION - 2:
-            if self.is_opponent(end_pos.up().get_square(self.board)) and self.is_opponent(end_pos.down().get_square(self.board)):
-                print("Piece itself captured")
-                end_pos.set_square(self.board, None)
-                reward += Hnefatafl.CAPTURED_REWARD
-        """
 
         # check if moved piece captures the king
         # 1. king is on the throne
