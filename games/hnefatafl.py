@@ -140,7 +140,13 @@ class Position:
     Represents a zero-based position on the board.
     """
 
-    CAPTURED = -1
+    MIDDLE = (3, 3)
+    UPPER_LEFT = (0, 0)
+    UPPER_RIGHT = (6, 0)
+    LOWER_LEFT = (0, 6)
+    LOWER_RIGHT = (6, 6)
+    CORNERS = [UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT]
+    RESTRICTED_POSITIONS = [UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT, MIDDLE]
 
     def __init__(self, x: int, y: int):
         self.x = x
@@ -188,19 +194,12 @@ class Position:
             print("Piece is none")
             return False
 
-        restricted_positions = [
-            Position(0, 0),
-            Position(0, Hnefatafl.DIMENSION - 1),
-            Position(Hnefatafl.DIMENSION - 1, 0),
-            Position(Hnefatafl.DIMENSION - 1, Hnefatafl.DIMENSION - 1),
-            Position(3, 3),
-        ]
         is_within_board = (
             0 <= self.x < Hnefatafl.DIMENSION and 0 <= self.y < Hnefatafl.DIMENSION
         )
         if not is_within_board:
             return False
-        if self in restricted_positions:
+        if self in Position.RESTRICTED_POSITIONS:
             return piece == PieceType.KING  # only king can enter restricted squares
         return True
 
@@ -593,11 +592,8 @@ class Hnefatafl:
         If GameResult is DRAW, the second value is None.
         """
         # The King Escapes
-        if self.king.position.x == 0 or self.king.position.x == Hnefatafl.DIMENSION - 1:
-            print("king escaped 1")
-            return GameResult.WIN, PlayerRole.DEFENDER
-        if self.king.position.y == 0 or self.king.position.y == Hnefatafl.DIMENSION - 1:
-            print("king escaped 2")
+        if self.king.position in Position.CORNERS:
+            print("king escaped")
             return GameResult.WIN, PlayerRole.DEFENDER
         # The King is Captured
         if self.king.captured:
@@ -731,20 +727,19 @@ class Hnefatafl:
 
         # check if moved piece captures the king
         # 1. king is on the throne
-        middle = Position(3, 3)
-        if self.king.position == middle:
+        if self.king.position == Position.MIDDLE:
             if (
-                middle.up().get_square(self.board) == PieceType.ATTACKER
-                and middle.left().get_square(self.board) == PieceType.ATTACKER
-                and middle.right().get_square(self.board) == PieceType.ATTACKER
-                and middle.down().get_square(self.board) == PieceType.ATTACKER
+                Position.MIDDLE.up().get_square(self.board) == PieceType.ATTACKER
+                and Position.MIDDLE.left().get_square(self.board) == PieceType.ATTACKER
+                and Position.MIDDLE.right().get_square(self.board) == PieceType.ATTACKER
+                and Position.MIDDLE.down().get_square(self.board) == PieceType.ATTACKER
             ):
                 print("King captured")
                 self.king.captured = True
-                middle.set_square(self.board, None)
+                Position.MIDDLE.set_square(self.board, None)
         # 2. king is next to the throne
         # 2.1 above
-        if self.king.position == middle.up():
+        if self.king.position == Position.MIDDLE.up():
             if (
                 self.king.position.up().get_square(self.board) == PieceType.ATTACKER
                 and self.king.position.left().get_square(self.board)
@@ -756,7 +751,7 @@ class Hnefatafl:
                 self.king.position.set_square(self.board, None)
                 self.king.captured = True
         # 2.2 below
-        if self.king.position == middle.down():
+        if self.king.position == Position.MIDDLE.down():
             if (
                 self.king.position.down().get_square(self.board) == PieceType.ATTACKER
                 and self.king.position.left().get_square(self.board)
@@ -768,7 +763,7 @@ class Hnefatafl:
                 self.king.position.set_square(self.board, None)
                 self.king.captured = True
         # 2.3 to the left
-        if self.king.position == middle.left():
+        if self.king.position == Position.MIDDLE.left():
             if (
                 self.king.position.left().get_square(self.board) == PieceType.ATTACKER
                 and self.king.position.up().get_square(self.board) == PieceType.ATTACKER
@@ -779,7 +774,7 @@ class Hnefatafl:
                 self.king.position.set_square(self.board, None)
                 self.king.captured = True
         # 2.4 to the right
-        if self.king.position == middle.right():
+        if self.king.position == Position.MIDDLE.right():
             if (
                 self.king.position.right().get_square(self.board) == PieceType.ATTACKER
                 and self.king.position.up().get_square(self.board) == PieceType.ATTACKER
