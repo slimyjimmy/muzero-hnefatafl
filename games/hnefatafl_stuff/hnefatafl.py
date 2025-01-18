@@ -103,10 +103,10 @@ class Hnefatafl:
         self.player_role = role
         self.current_player = PlayerRole.ATTACKER
         self.king = Piece(PieceType.KING, Position(3, 3))
-        self.attackers: List[Position] = self.__get_attackers(default_board)
-        self.defenders: List[Position] = self.__get_defenders(default_board)
+        self.attackers: List[Position] = self.get_attackers(default_board)
+        self.defenders: List[Position] = self.get_defenders(default_board)
 
-    def __get_attackers(self, board: Board) -> List[Position]:
+    def get_attackers(self, board: Board) -> List[Position]:
         attackers: List[Position] = []
         for i in range(Hnefatafl.DIMENSION):
             for j in range(Hnefatafl.DIMENSION):
@@ -115,7 +115,7 @@ class Hnefatafl:
                     attackers.append(pos)
         return attackers
 
-    def __get_defenders(self, board: Board) -> List[Position]:
+    def get_defenders(self, board: Board) -> List[Position]:
         defenders: List[Position] = []
         for i in range(Hnefatafl.DIMENSION):
             for j in range(Hnefatafl.DIMENSION):
@@ -144,6 +144,9 @@ class Hnefatafl:
                 elif pos.get_square(self.board) == PieceType.KING:
                     observation[2, i, j] = 1
         return observation
+
+    def to_play(self):
+        return 0 if self.player_role == 1 else 1
 
     def get_possible_dests_from_pos(
         self,
@@ -455,8 +458,8 @@ class Hnefatafl:
                 reward += Hnefatafl.LOSS_REWARD
         self.current_player = self.current_player.toggle()
 
-        self.attackers = self.__get_attackers(self.board)
-        self.defenders = self.__get_defenders(self.board)
+        self.attackers = self.get_attackers(self.board)
+        self.defenders = self.get_defenders(self.board)
 
         return self.board, reward, done
 
