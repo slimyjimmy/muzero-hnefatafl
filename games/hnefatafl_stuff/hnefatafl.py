@@ -232,17 +232,24 @@ class Hnefatafl:
 
     def game_over(
         self,
-        king_pos: Position,
+        king_pos: Optional[Position],
         king_captured: bool,
         board: Board,
         player: PlayerRole,
-        defenders: List[Position],
+        attackers: List[Position],
     ) -> Optional[Tuple[GameResult, PlayerRole]]:
         """
         Returns the game result along with the player if game was won.
         If GameResult is ONGOING, the second value is None.
         If GameResult is DRAW, the second value is None.
         """
+
+        if not king_captured and king_pos is None:
+            raise ValueError("King was not captured, but no position given")
+
+        if not king_captured and king_pos.get_square(board=board) != PieceType.KING:
+            raise ValueError("King not in king_pos")
+
         # The King Escapes
         if king_pos in Hnefatafl.CORNERS:
             print("king escaped")
@@ -255,10 +262,10 @@ class Hnefatafl:
         if len(self.get_possible_moves(board=board, player=player)) == 0:
             print("no legal moves left")
             return GameResult.DRAW, None
-        # All Defenders Are Eliminated
-        if len(defenders) == 0:
-            print("all defenders eleminated")
-            return GameResult.WIN, PlayerRole.ATTACKER
+        # All Attackers Are Eliminated
+        if len(attackers) == 0:
+            print("all attackers eleminated")
+            return GameResult.WIN, PlayerRole.DEFENDER
         return GameResult.ONGOING, None
 
     def move_to_action(self, move: Move) -> int:
@@ -444,7 +451,7 @@ class Hnefatafl:
             king_captured=self.king.captured,
             board=self.board,
             player=self.current_player,
-            defenders=self.defenders,
+            attackers=self.attackers,
         )
         done = game_result != GameResult.ONGOING
         if game_result == GameResult.WIN:
