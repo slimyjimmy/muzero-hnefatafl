@@ -149,9 +149,7 @@ class Hnefatafl:
         return 0 if self.player_role == 1 else 1
 
     def get_possible_dests_from_pos(
-        self,
-        start_pos: Position,
-        board: Board,
+        self, start_pos: Position, board: Board, player: PlayerRole
     ) -> List[Position]:
         dests: List[Position] = []
 
@@ -159,7 +157,9 @@ class Hnefatafl:
         if piece_to_move is None:
             return dests
 
-        if self.belongs_to_me(start_pos.get_square(board)):
+        if self.piece_belongs_to_player(
+            piece=start_pos.get_square(board), player=player
+        ):
             # move left
             k = 1
             while (
@@ -207,7 +207,7 @@ class Hnefatafl:
                     piece=pos.get_square(board), player=player
                 ):
                     possible_moves_from_pos = self.get_possible_dests_from_pos(
-                        pos, board
+                        pos, board, player
                     )
                     for end_pos in possible_moves_from_pos:
                         moves.append((pos, end_pos))
@@ -292,18 +292,24 @@ class Hnefatafl:
         new_pos: Position,
         maybe_captured: Position,
         other_side: Position,
+        player: PlayerRole,
+        board: Board,
+        king_pos: Position,
     ) -> bool:
         if not new_pos.is_within_board():
+            print("1")
             return False
         if not maybe_captured.is_within_board():
+            print("2")
             return False
         if not other_side.is_within_board():
+            print("3")
             return False
-        if not self.is_opponent(
-            maybe_captured.get_square(self.board), of_player=self.current_player
-        ):
+        if not self.is_opponent(maybe_captured.get_square(board), of_player=player):
+            print("4")
             return False
-        if maybe_captured.get_square(self.board) == PieceType.KING:
+        if maybe_captured.get_square(board) == PieceType.KING:
+            print("5")
             return False  # king can't be captured by two pieces
 
         # to capture maybe_captured, other_side can either be
@@ -312,43 +318,66 @@ class Hnefatafl:
         #     - a corner
         #     - maybe_captured is defender -> empty throne
         #     - maybe_captured is attacker -> throne
-        if self.belongs_to_me(other_side.get_square(self.board)):
+        if self.piece_belongs_to_player(
+            piece=other_side.get_square(board),
+            player=player,
+        ):
             return True
         if other_side in Hnefatafl.CORNERS:
             return True
-        if maybe_captured.get_square(self.board) == PieceType.DEFENDER:
-            if (
-                other_side == Hnefatafl.MIDDLE
-                and self.king.position != Hnefatafl.MIDDLE
-            ):
+        if maybe_captured.get_square(board) == PieceType.DEFENDER:
+            if other_side == Hnefatafl.MIDDLE and king_pos != Hnefatafl.MIDDLE:
                 return True
-        if maybe_captured.get_square(self.board) == PieceType.ATTACKER:
+        if maybe_captured.get_square(board) == PieceType.ATTACKER:
             if other_side == Hnefatafl.MIDDLE:
                 return True
+        print("6")
         return False
 
-    def piece_captures_opponent(self, end_pos: Position) -> Optional[Position]:
+    def piece_captures_opponent(
+        self, end_pos: Position, board: Board
+    ) -> Optional[Position]:
         """
         Returns position of captured opponent if the piece moved to its new position `end_pos`captures an opponent.
         Returns None otherwise.
         """
         if self.piece_captured(
-            new_pos=end_pos, maybe_captured=end_pos.up(), other_side=end_pos.up(2)
+            new_pos=end_pos,
+            maybe_captured=end_pos.up(),
+            other_side=end_pos.up(2),
+            player=self.current_player,
+            board=board,
+            king_pos=self.king.position,
         ):
             return end_pos.up()
 
         if self.piece_captured(
-            new_pos=end_pos, maybe_captured=end_pos.down(), other_side=end_pos.down(2)
+            new_pos=end_pos,
+            maybe_captured=end_pos.down(),
+            other_side=end_pos.down(2),
+            player=self.current_player,
+            board=board,
+            king_pos=self.king.position,
         ):
             return end_pos.down()
 
         if self.piece_captured(
-            new_pos=end_pos, maybe_captured=end_pos.left(), other_side=end_pos.left(2)
+            new_pos=end_pos,
+            maybe_captured=end_pos.left(),
+            other_side=end_pos.left(2),
+            player=self.current_player,
+            board=board,
+            king_pos=self.king.position,
         ):
             return end_pos.left()
 
         if self.piece_captured(
-            new_pos=end_pos, maybe_captured=end_pos.right(), other_side=end_pos.right(2)
+            new_pos=end_pos,
+            maybe_captured=end_pos.right(),
+            other_side=end_pos.right(2),
+            player=self.current_player,
+            board=board,
+            king_pos=self.king.position,
         ):
             return end_pos.right()
 
@@ -411,7 +440,7 @@ class Hnefatafl:
             reward += Hnefatafl.INVALID_ACTION_REWARD
             return self.board, reward, False
         possible_dests = self.get_possible_dests_from_pos(
-            start_pos=start_pos, board=self.board
+            start_pos=start_pos, board=self.board, player=self.current_player
         )
         if len(possible_dests) == 0:
             # TODO: check other start positions (maybe can make moves from other start pos)
