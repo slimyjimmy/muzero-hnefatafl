@@ -7,75 +7,87 @@ from games.hnefatafl_stuff.player_role import PlayerRole
 from games.hnefatafl_stuff.position import Position
 from games.hnefatafl_stuff.types import Board
 
+empty_board: Board = [
+    [None] * 7,
+    [None] * 7,
+    [None] * 7,
+    [None] * 7,
+    [None] * 7,
+    [None] * 7,
+    [None] * 7,
+]
+
+default_board: Board = [
+    [
+        None,
+        None,
+        None,
+        PieceType.ATTACKER,
+        None,
+        None,
+        None,
+    ],
+    [
+        None,
+        None,
+        None,
+        PieceType.ATTACKER,
+        None,
+        None,
+        None,
+    ],
+    [
+        None,
+        None,
+        None,
+        PieceType.DEFENDER,
+        None,
+        None,
+        None,
+    ],
+    [
+        PieceType.ATTACKER,
+        PieceType.ATTACKER,
+        PieceType.DEFENDER,
+        PieceType.KING,
+        PieceType.DEFENDER,
+        PieceType.ATTACKER,
+        PieceType.ATTACKER,
+    ],
+    [
+        None,
+        None,
+        None,
+        PieceType.DEFENDER,
+        None,
+        None,
+        None,
+    ],
+    [
+        None,
+        None,
+        None,
+        PieceType.ATTACKER,
+        None,
+        None,
+        None,
+    ],
+    [
+        None,
+        None,
+        None,
+        PieceType.ATTACKER,
+        None,
+        None,
+        None,
+    ],
+]
+
 
 def test_get_attackers():
     hnefatafl = Hnefatafl()
-    default_board: Board = [
-        [
-            None,
-            None,
-            None,
-            PieceType.ATTACKER,
-            None,
-            None,
-            None,
-        ],
-        [
-            None,
-            None,
-            None,
-            PieceType.ATTACKER,
-            None,
-            None,
-            None,
-        ],
-        [
-            None,
-            None,
-            None,
-            PieceType.DEFENDER,
-            None,
-            None,
-            None,
-        ],
-        [
-            PieceType.ATTACKER,
-            PieceType.ATTACKER,
-            PieceType.DEFENDER,
-            PieceType.KING,
-            PieceType.DEFENDER,
-            PieceType.ATTACKER,
-            PieceType.ATTACKER,
-        ],
-        [
-            None,
-            None,
-            None,
-            PieceType.DEFENDER,
-            None,
-            None,
-            None,
-        ],
-        [
-            None,
-            None,
-            None,
-            PieceType.ATTACKER,
-            None,
-            None,
-            None,
-        ],
-        [
-            None,
-            None,
-            None,
-            PieceType.ATTACKER,
-            None,
-            None,
-            None,
-        ],
-    ]
-    attackers = hnefatafl.get_attackers(board=default_board)
+
+    attackers = hnefatafl.get_attackers(board=default_board.copy())
     expected_attackers: List[Position] = [
         Position(y=0, x=3),
         Position(y=1, x=3),
@@ -93,72 +105,8 @@ def test_get_attackers():
 
 def test_get_defenders():
     hnefatafl = Hnefatafl()
-    default_board: Board = [
-        [
-            None,
-            None,
-            None,
-            PieceType.ATTACKER,
-            None,
-            None,
-            None,
-        ],
-        [
-            None,
-            None,
-            None,
-            PieceType.ATTACKER,
-            None,
-            None,
-            None,
-        ],
-        [
-            None,
-            None,
-            None,
-            PieceType.DEFENDER,
-            None,
-            None,
-            None,
-        ],
-        [
-            PieceType.ATTACKER,
-            PieceType.ATTACKER,
-            PieceType.DEFENDER,
-            PieceType.KING,
-            PieceType.DEFENDER,
-            PieceType.ATTACKER,
-            PieceType.ATTACKER,
-        ],
-        [
-            None,
-            None,
-            None,
-            PieceType.DEFENDER,
-            None,
-            None,
-            None,
-        ],
-        [
-            None,
-            None,
-            None,
-            PieceType.ATTACKER,
-            None,
-            None,
-            None,
-        ],
-        [
-            None,
-            None,
-            None,
-            PieceType.ATTACKER,
-            None,
-            None,
-            None,
-        ],
-    ]
-    defenders = hnefatafl.get_defenders(board=default_board)
+
+    defenders = hnefatafl.get_defenders(board=default_board.copy())
     expected_defenders: List[Position] = [
         Position(y=2, x=3),
         Position(y=3, x=2),
@@ -240,8 +188,8 @@ def test_piece_belongs_to_player():
     assert res
 
 
-"""def test_game_over():
-    raise NotImplementedError("This method is not implemented yet.")"""
+def test_game_over():
+    raise NotImplementedError("This method is not implemented yet.")
 
 
 def test_is_opponent():
@@ -298,73 +246,54 @@ def test_is_opponent():
 def test_get_rendering_string():
     hnefatafl = Hnefatafl()
 
-    board_1: Board = [
-        [
-            None,
-            None,
-            None,
-            PieceType.ATTACKER,
-            None,
-            None,
-            None,
-        ],
-        [
-            None,
-            None,
-            None,
-            PieceType.ATTACKER,
-            None,
-            None,
-            None,
-        ],
-        [
-            None,
-            None,
-            None,
-            PieceType.DEFENDER,
-            None,
-            None,
-            None,
-        ],
-        [
-            PieceType.ATTACKER,
-            PieceType.ATTACKER,
-            PieceType.DEFENDER,
-            PieceType.KING,
-            PieceType.DEFENDER,
-            PieceType.ATTACKER,
-            PieceType.ATTACKER,
-        ],
-        [
-            None,
-            None,
-            None,
-            PieceType.DEFENDER,
-            None,
-            None,
-            None,
-        ],
-        [
-            None,
-            None,
-            None,
-            PieceType.ATTACKER,
-            None,
-            None,
-            None,
-        ],
-        [
-            None,
-            None,
-            None,
-            PieceType.ATTACKER,
-            None,
-            None,
-            None,
-        ],
-    ]
-    res = hnefatafl.get_rendering_string(board=board_1)
+    res = hnefatafl.get_rendering_string(board=default_board.copy())
     assert (
         res
         == "  A   B   C   D   E   F   G\n+---+---+---+---+---+---+---+\n|   |   |   | 🗡️ |   |   |   | 7\n+---+---+---+---+---+---+---+\n|   |   |   | 🗡️ |   |   |   | 6\n+---+---+---+---+---+---+---+\n|   |   |   | 🛡️ |   |   |   | 5\n+---+---+---+---+---+---+---+\n| 🗡️ | 🗡️ | 🛡️ | K | 🛡️ | 🗡️ | 🗡️ | 4\n+---+---+---+---+---+---+---+\n|   |   |   | 🛡️ |   |   |   | 3\n+---+---+---+---+---+---+---+\n|   |   |   | 🗡️ |   |   |   | 2\n+---+---+---+---+---+---+---+\n|   |   |   | 🗡️ |   |   |   | 1\n+---+---+---+---+---+---+---+\n"
     )
+
+
+def test_piece_captured():
+    raise NotImplementedError("This method is not implemented yet.")
+
+
+def test_piece_captures_opponent():
+    raise NotImplementedError("This method is not implemented yet.")
+
+
+def test_king_is_captured():
+    hnefatafl = Hnefatafl()
+
+    # king is on throne and surrounded by attackers
+    middle_captured = default_board.copy()
+    Position(y=2, x=3).set_square(board=middle_captured, piece=PieceType.ATTACKER)
+    Position(y=3, x=2).set_square(board=middle_captured, piece=PieceType.ATTACKER)
+    Position(y=3, x=4).set_square(board=middle_captured, piece=PieceType.ATTACKER)
+    Position(y=4, x=3).set_square(board=middle_captured, piece=PieceType.ATTACKER)
+    assert hnefatafl.king_is_captured(Position(3, 3), middle_captured)
+
+    # king is on throne, but not fully surrounded by attackers
+    Position(y=4, x=3).set_square(board=middle_captured, piece=None)
+    assert not hnefatafl.king_is_captured(Position(3, 3), middle_captured)
+
+    # king is next to throne and surrounded by attackers on other 3 sides
+    next_to_throne_captured = empty_board.copy()
+    king_pos = Position(y=4, x=3)
+    king_pos.set_square(board=next_to_throne_captured, piece=PieceType.KING)
+    king_pos.up().set_square(board=next_to_throne_captured, piece=PieceType.ATTACKER)
+    king_pos.left().set_square(board=next_to_throne_captured, piece=PieceType.ATTACKER)
+    king_pos.right().set_square(board=next_to_throne_captured, piece=PieceType.ATTACKER)
+    assert hnefatafl.king_is_captured(king_pos=king_pos, board=next_to_throne_captured)
+
+    # king is on "random" square (not restricted, not throne, not next to throne) and captured
+    random_captured = empty_board.copy()
+    king_pos = Position(2, 1)
+    king_pos.set_square(board=random_captured, piece=PieceType.KING)
+    king_pos.up().set_square(board=random_captured, piece=PieceType.ATTACKER)
+    king_pos.down().set_square(board=random_captured, piece=PieceType.ATTACKER)
+    king_pos.left().set_square(board=random_captured, piece=PieceType.ATTACKER)
+    king_pos.right().set_square(board=random_captured, piece=PieceType.ATTACKER)
+    assert hnefatafl.king_is_captured(king_pos=king_pos, board=random_captured)
+
+    king_pos.right().set_square(board=random_captured, piece=None)
+    assert not hnefatafl.king_is_captured(king_pos=king_pos, board=random_captured)
