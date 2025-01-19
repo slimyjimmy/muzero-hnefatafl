@@ -5,6 +5,14 @@ from games.hnefatafl_stuff.position import Position
 from games.hnefatafl_stuff.types import default_board
 
 
+def test_eq():
+    pos1 = Position(1, 2)
+    pos1b = Position(1, 2)
+    pos2 = Position(2, 2)
+    assert pos1 == pos1b
+    assert not pos1 == pos2
+
+
 def test_up():
     test = Position(y=1, x=1)
     up = test.up()

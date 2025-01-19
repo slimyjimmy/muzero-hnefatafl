@@ -40,7 +40,7 @@ class Position:
 
     def set_square(
         self, board: List[List[Optional[PieceType]]], piece: Optional[PieceType]
-    ):
+    ) -> None:
         board[self.y][self.x] = piece
 
     def is_within_board(self) -> bool:
