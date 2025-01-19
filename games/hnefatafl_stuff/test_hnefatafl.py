@@ -132,7 +132,9 @@ def test_get_possible_dests_from_pos():
         [None] * 7,
     ]
     res = hnefatafl.get_possible_dests_from_pos(
-        board=board_1, start_pos=Position(y=0, x=1)
+        board=board_1,
+        start_pos=Position(y=0, x=1),
+        player=PlayerRole.ATTACKER,
     )
     assert len(res) == (7 - 3) + (7 - 1)
 
@@ -278,8 +280,319 @@ def test_get_rendering_string():
 
 
 def test_piece_captured():
-    # TODO
-    pass
+    hnefatafl = Hnefatafl()
+
+    # DAD
+    empty = copy.deepcopy(empty_board)
+    pos = Position(2, 1)
+    pos.set_square(board=empty, piece=PieceType.ATTACKER)
+    pos.left().set_square(board=empty, piece=PieceType.DEFENDER)
+    pos.right().set_square(board=empty, piece=PieceType.DEFENDER)
+    assert hnefatafl.piece_captured(
+        new_pos=pos.left(),
+        maybe_captured=pos,
+        other_side=pos.right(),
+        player=PlayerRole.DEFENDER,
+        board=empty,
+        king_pos=Position(3, 3),
+    )
+
+    # ADA
+    empty = copy.deepcopy(empty_board)
+    pos = Position(2, 1)
+    pos.set_square(board=empty, piece=PieceType.DEFENDER)
+    pos.left().set_square(board=empty, piece=PieceType.ATTACKER)
+    pos.right().set_square(board=empty, piece=PieceType.ATTACKER)
+    assert hnefatafl.piece_captured(
+        new_pos=pos.left(),
+        maybe_captured=pos,
+        other_side=pos.right(),
+        player=PlayerRole.ATTACKER,
+        board=empty,
+        king_pos=Position(3, 3),
+    )
+
+    # KAD
+    empty = copy.deepcopy(empty_board)
+    pos = Position(2, 1)
+    pos.set_square(board=empty, piece=PieceType.ATTACKER)
+    pos.left().set_square(board=empty, piece=PieceType.KING)
+    pos.right().set_square(board=empty, piece=PieceType.DEFENDER)
+    assert hnefatafl.piece_captured(
+        new_pos=pos.left(),
+        maybe_captured=pos,
+        other_side=pos.right(),
+        player=PlayerRole.DEFENDER,
+        board=empty,
+        king_pos=pos.left(),
+    )
+
+    # KDA
+    empty = copy.deepcopy(empty_board)
+    pos = Position(2, 1)
+    pos.set_square(board=empty, piece=PieceType.DEFENDER)
+    pos.left().set_square(board=empty, piece=PieceType.KING)
+    pos.right().set_square(board=empty, piece=PieceType.ATTACKER)
+    assert not hnefatafl.piece_captured(
+        new_pos=pos.left(),
+        maybe_captured=pos,
+        other_side=pos.right(),
+        player=PlayerRole.DEFENDER,
+        board=empty,
+        king_pos=pos.left(),
+    )
+
+    # D
+    # A
+    # D
+    empty = copy.deepcopy(empty_board)
+    pos = Position(2, 1)
+    pos.set_square(board=empty, piece=PieceType.ATTACKER)
+    pos.up().set_square(board=empty, piece=PieceType.DEFENDER)
+    pos.down().set_square(board=empty, piece=PieceType.DEFENDER)
+    assert hnefatafl.piece_captured(
+        new_pos=pos.up(),
+        maybe_captured=pos,
+        other_side=pos.down(),
+        player=PlayerRole.DEFENDER,
+        board=empty,
+        king_pos=Position(3, 3),
+    )
+
+    # A
+    # D
+    # A
+    empty = copy.deepcopy(empty_board)
+    pos = Position(2, 1)
+    pos.set_square(board=empty, piece=PieceType.DEFENDER)
+    pos.up().set_square(board=empty, piece=PieceType.ATTACKER)
+    pos.down().set_square(board=empty, piece=PieceType.ATTACKER)
+    assert hnefatafl.piece_captured(
+        new_pos=pos.up(),
+        maybe_captured=pos,
+        other_side=pos.down(),
+        player=PlayerRole.ATTACKER,
+        board=empty,
+        king_pos=Position(3, 3),
+    )
+
+    # K
+    # D
+    # A
+    empty = copy.deepcopy(empty_board)
+    pos = Position(2, 1)
+    pos.set_square(board=empty, piece=PieceType.DEFENDER)
+    pos.up().set_square(board=empty, piece=PieceType.KING)
+    pos.down().set_square(board=empty, piece=PieceType.ATTACKER)
+    assert not hnefatafl.piece_captured(
+        new_pos=pos.up(),
+        maybe_captured=pos,
+        other_side=pos.down(),
+        player=PlayerRole.DEFENDER,
+        board=empty,
+        king_pos=pos.up(),
+    )
+
+    # K
+    # A
+    # D
+    empty = copy.deepcopy(empty_board)
+    pos = Position(2, 1)
+    pos.set_square(board=empty, piece=PieceType.ATTACKER)
+    pos.up().set_square(board=empty, piece=PieceType.KING)
+    pos.down().set_square(board=empty, piece=PieceType.DEFENDER)
+    assert hnefatafl.piece_captured(
+        new_pos=pos.up(),
+        maybe_captured=pos,
+        other_side=pos.down(),
+        player=PlayerRole.DEFENDER,
+        board=empty,
+        king_pos=pos.up(),
+    )
+
+    # RDA (R = restricted field)
+    empty = copy.deepcopy(empty_board)
+    pos = Position(y=0, x=1)
+    pos.set_square(board=empty, piece=PieceType.DEFENDER)
+    pos.right().set_square(board=empty, piece=PieceType.ATTACKER)
+    assert hnefatafl.piece_captured(
+        new_pos=pos.right(),
+        maybe_captured=pos,
+        other_side=pos.left(),
+        player=PlayerRole.ATTACKER,
+        board=empty,
+        king_pos=Position(3, 3),
+    )
+
+    # RAD
+    empty = copy.deepcopy(empty_board)
+    pos = Position(y=0, x=1)
+    pos.set_square(board=empty, piece=PieceType.ATTACKER)
+    pos.right().set_square(board=empty, piece=PieceType.DEFENDER)
+    assert hnefatafl.piece_captured(
+        new_pos=pos.right(),
+        maybe_captured=pos,
+        other_side=pos.left(),
+        player=PlayerRole.DEFENDER,
+        board=empty,
+        king_pos=Position(3, 3),
+    )
+
+    # R
+    # D
+    # A
+    empty = copy.deepcopy(empty_board)
+    pos = Position(y=Hnefatafl.DIMENSION - 2, x=0)
+    pos.set_square(board=empty, piece=PieceType.DEFENDER)
+    pos.down().set_square(board=empty, piece=PieceType.ATTACKER)
+    assert hnefatafl.piece_captured(
+        new_pos=pos.down(),
+        maybe_captured=pos,
+        other_side=pos.up(),
+        player=PlayerRole.ATTACKER,
+        board=empty,
+        king_pos=Position(3, 3),
+    )
+
+    # R
+    # A
+    # D
+    empty = copy.deepcopy(empty_board)
+    pos = Position(y=Hnefatafl.DIMENSION - 2, x=0)
+    pos.set_square(board=empty, piece=PieceType.ATTACKER)
+    pos.down().set_square(board=empty, piece=PieceType.DEFENDER)
+    assert hnefatafl.piece_captured(
+        new_pos=pos.down(),
+        maybe_captured=pos,
+        other_side=pos.up(),
+        player=PlayerRole.DEFENDER,
+        board=empty,
+        king_pos=Position(3, 3),
+    )
+
+    # EDA (E = empty throne)
+    empty = copy.deepcopy(empty_board)
+    pos = Position(y=3, x=4)
+    pos.set_square(board=empty, piece=PieceType.DEFENDER)
+    pos.right().set_square(board=empty, piece=PieceType.ATTACKER)
+    assert hnefatafl.piece_captured(
+        new_pos=pos.right(),
+        maybe_captured=pos,
+        other_side=pos.left(),
+        player=PlayerRole.ATTACKER,
+        board=empty,
+        king_pos=Position(0, 0),
+    )
+
+    # EAD (E = empty throne)
+    empty = copy.deepcopy(empty_board)
+    pos = Position(y=3, x=4)
+    pos.set_square(board=empty, piece=PieceType.ATTACKER)
+    pos.right().set_square(board=empty, piece=PieceType.DEFENDER)
+    assert hnefatafl.piece_captured(
+        new_pos=pos.right(),
+        maybe_captured=pos,
+        other_side=pos.left(),
+        player=PlayerRole.DEFENDER,
+        board=empty,
+        king_pos=Position(0, 0),
+    )
+
+    # E
+    # D
+    # A
+    empty = copy.deepcopy(empty_board)
+    pos = Position(y=2, x=3)
+    pos.set_square(board=empty, piece=PieceType.DEFENDER)
+    pos.down().set_square(board=empty, piece=PieceType.ATTACKER)
+    assert hnefatafl.piece_captured(
+        new_pos=pos.down(),
+        maybe_captured=pos,
+        other_side=pos.up(),
+        player=PlayerRole.ATTACKER,
+        board=empty,
+        king_pos=Position(0, 0),
+    )
+
+    # E
+    # A
+    # D
+    empty = copy.deepcopy(empty_board)
+    pos = Position(y=2, x=3)
+    pos.set_square(board=empty, piece=PieceType.ATTACKER)
+    pos.down().set_square(board=empty, piece=PieceType.DEFENDER)
+    assert hnefatafl.piece_captured(
+        new_pos=pos.down(),
+        maybe_captured=pos,
+        other_side=pos.up(),
+        player=PlayerRole.DEFENDER,
+        board=empty,
+        king_pos=Position(0, 0),
+    )
+
+    # ODA (O = occupied throne)
+    empty = copy.deepcopy(empty_board)
+    Position(3, 3).set_square(board=empty, piece=PieceType.KING)
+    pos = Position(y=3, x=4)
+    pos.set_square(board=empty, piece=PieceType.DEFENDER)
+    pos.right().set_square(board=empty, piece=PieceType.ATTACKER)
+    assert not hnefatafl.piece_captured(
+        new_pos=pos.right(),
+        maybe_captured=pos,
+        other_side=pos.left(),
+        player=PlayerRole.ATTACKER,
+        board=empty,
+        king_pos=Position(3, 3),
+    )
+
+    # OAD (O = occupied throne)
+    empty = copy.deepcopy(empty_board)
+    Position(3, 3).set_square(board=empty, piece=PieceType.KING)
+    pos = Position(y=3, x=4)
+    pos.set_square(board=empty, piece=PieceType.ATTACKER)
+    pos.right().set_square(board=empty, piece=PieceType.DEFENDER)
+    assert hnefatafl.piece_captured(
+        new_pos=pos.right(),
+        maybe_captured=pos,
+        other_side=pos.left(),
+        player=PlayerRole.DEFENDER,
+        board=empty,
+        king_pos=Position(3, 3),
+    )
+
+    # O
+    # D
+    # A
+    empty = copy.deepcopy(empty_board)
+    Position(3, 3).set_square(board=empty, piece=PieceType.KING)
+    pos = Position(y=2, x=3)
+    pos.set_square(board=empty, piece=PieceType.DEFENDER)
+    pos.down().set_square(board=empty, piece=PieceType.ATTACKER)
+    assert not hnefatafl.piece_captured(
+        new_pos=pos.down(),
+        maybe_captured=pos,
+        other_side=pos.up(),
+        player=PlayerRole.ATTACKER,
+        board=empty,
+        king_pos=Position(3, 3),
+    )
+
+    # O
+    # A
+    # D
+    empty = copy.deepcopy(empty_board)
+    Position(3, 3).set_square(board=empty, piece=PieceType.KING)
+    pos = Position(y=2, x=3)
+    pos.set_square(board=empty, piece=PieceType.ATTACKER)
+    pos.down().set_square(board=empty, piece=PieceType.DEFENDER)
+    assert hnefatafl.piece_captured(
+        new_pos=pos.down(),
+        maybe_captured=pos,
+        other_side=pos.up(),
+        player=PlayerRole.DEFENDER,
+        board=empty,
+        king_pos=Position(3, 3),
+    )
 
 
 def test_piece_captures_opponent():
