@@ -99,8 +99,8 @@ class Hnefatafl:
     ]
 
     def __init__(self, role=PlayerRole.ATTACKER):
-        default_board = Hnefatafl.DEFAULT_BOARD.copy()
-        self.board = default_board
+        default_board = copy.deepcopy(Hnefatafl.DEFAULT_BOARD)
+        self.board = copy.deepcopy(default_board)
         self.player_role = role
         self.current_player = PlayerRole.ATTACKER
         self.king = Piece(PieceType.KING, Position(3, 3))
@@ -455,70 +455,101 @@ class Hnefatafl:
                 return True
         return False
 
-    def step(self, action):
+    @classmethod
+    def my_step(
+        cls,
+        board: Board,
+        move: Move,
+        player: PlayerRole,
+        king_pos: Position,
+        attackers: List[Position],
+    ) -> Tuple[
+        bool,
+        int,
+        Board,
+        Position,
+        bool,
+    ]:  # done, reward, updated_board, updated_king_pos, king_captured
+        done = False
         reward = 0
-        # check if action is legal
-        start_pos, end_pos = self.action_to_move(action)
-        if not self.belongs_to_me(start_pos.get_square(self.board)):
-            print("Can't move from here")
-            reward += Hnefatafl.INVALID_ACTION_REWARD
-            return self.board, reward, False
-        possible_dests = Hnefatafl.get_possible_dests_from_pos(
-            start_pos=start_pos,
-            board=self.board,
-            player=self.current_player,
-        )
-        if len(possible_dests) == 0:
-            # TODO: check other start positions (maybe can make moves from other start pos)
-            # current_player loses
-            print("No possible moves")
-            reward += Hnefatafl.LOSS_REWARD
-            return self.board, reward, True
-        if end_pos not in possible_dests:
-            print(f"Invalid move ({start_pos.to_string()} -> {end_pos.to_string()})")
-            reward += Hnefatafl.INVALID_ACTION_REWARD
-            return self.board, reward, False
+        updated_king_pos = copy.deepcopy(king_pos)
+        king_captured = False
 
+        start_pos, end_pos = move
+
+        # check if any moves left
+        if len(Hnefatafl.get_possible_moves(board=board, player=player)) == 0:
+            return True, Hnefatafl.INVALID_ACTION_REWARD, board, king_pos
+
+        # check if move is legal
+        if not Hnefatafl.piece_belongs_to_player(
+            piece=start_pos.get_square(board=board), player=player
+        ):
+            return False, Hnefatafl.INVALID_ACTION_REWARD, board, king_pos
+        if not end_pos in Hnefatafl.get_possible_dests_from_pos(
+            start_pos=start_pos, board=board, player=player
+        ):
+            return False, Hnefatafl.INVALID_ACTION_REWARD, board, king_pos
+
+        # move piece from move[0] to move[1]
         reward += Hnefatafl.VALID_ACTION_REWARD
-        piece = start_pos.get_square(self.board)
-        start_pos.set_square(self.board, None)
-        end_pos.set_square(self.board, piece)
-        if piece == PieceType.KING:
-            self.king.position = end_pos
-        print(
-            f"Player {self.current_player} moved {piece.to_string()} from {start_pos.to_string()} to {end_pos.to_string()}"
-        )
+        end_pos.set_square(board=board, piece=start_pos.get_square(board=board))
+        start_pos.set_square(board=board, piece=None)
+        if end_pos.get_square(board) == PieceType.KING:
+            updated_king_pos = end_pos
 
+        # check if adjacent piece (to move[1]) was captured
         capture_res = Hnefatafl.piece_captures_opponent(
             end_pos=end_pos,
-            board=self.board,
-            player=self.current_player,
-            king_pos=self.king.position,
+            board=board,
+            player=player,
+            king_pos=king_pos,
         )
         if not capture_res is None:
-            capture_res.set_square(self.board, None)
+            capture_res.set_square(board, None)
             reward += Hnefatafl.CAPTURE_REWARD
 
-        # check if piece captures king
-        if self.king_is_captured(king_pos=self.king.position, board=self.board):
-            print("King captured")
-            self.king.position.set_square(self.board, None)
-            self.king.captured = True
+        # check if king was captured
+        if Hnefatafl.king_is_captured(king_pos=updated_king_pos, board=board):
+            updated_king_pos.set_square(board=board, piece=None)
+            updated_king_pos = Position(Position.INVALID, Position.INVALID)
+            king_captured = True
+            return True, reward, board, updated_king_pos, king_captured
 
-        # check if the game is over
-        game_result, player = self.game_over(
-            king_pos=self.king.position,
-            king_captured=self.king.captured,
-            board=self.board,
-            player=self.current_player,
-            attackers=self.attackers,
+        # check if game is over
+        game_result, result_player = Hnefatafl.game_over(
+            king_pos=updated_king_pos,
+            king_captured=king_captured,
+            board=board,
+            player=player,
+            attackers=attackers,
         )
         done = game_result != GameResult.ONGOING
         if game_result == GameResult.WIN:
-            if player == self.player_role:
+            if result_player == player:
                 reward += Hnefatafl.WIN_REWARD
             else:
                 reward += Hnefatafl.LOSS_REWARD
+
+        return done, reward, board, updated_king_pos, king_captured
+
+    def step(self, action):
+        # check if action is legal
+        move = self.action_to_move(action)
+
+        done, reward, updated_board, updated_king_pos, king_captured = (
+            Hnefatafl.my_step(
+                board=self.board,
+                move=move,
+                player=self.current_player,
+                king_pos=self.king.position,
+                attackers=self.attackers,
+            )
+        )
+        self.board = updated_board
+        self.king.position = updated_king_pos
+        self.king.captured = king_captured
+
         self.current_player = self.current_player.toggle()
 
         self.attackers = Hnefatafl.get_attackers(self.board)

@@ -7,6 +7,8 @@ class Position:
     Represents a zero-based position on the board.
     """
 
+    INVALID = -1
+
     def __init__(self, x: int, y: int):
         self.x = x
         self.y = y

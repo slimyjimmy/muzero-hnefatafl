@@ -116,7 +116,6 @@ def test_get_defenders():
 
 
 def test_get_possible_dests_from_pos():
-
     board_1: Board = [
         [None, PieceType.ATTACKER, None, None, None, None, None],
         [None] * 7,
@@ -140,7 +139,6 @@ def test_get_possible_moves():
 
 
 def test_piece_belongs_to_player():
-
     # Attacker, Attacker
     res = Hnefatafl.piece_belongs_to_player(
         piece=PieceType.ATTACKER, player=PlayerRole.ATTACKER
@@ -175,7 +173,6 @@ def test_piece_belongs_to_player():
 
 
 def test_game_over():
-
     board = copy.deepcopy(default_board)
 
     # king reached corner square -> Defenders win
@@ -210,7 +207,6 @@ def test_game_over():
 
 
 def test_is_opponent():
-
     # defender vs defender
     res = Hnefatafl.is_opponent(
         piece_type=PieceType.DEFENDER, of_player=PlayerRole.DEFENDER
@@ -260,7 +256,6 @@ def test_is_opponent():
 
 
 def test_get_rendering_string():
-
     board = copy.deepcopy(default_board)
     res = Hnefatafl.get_rendering_string(board=board)
     print(f"at (3,3) is: {Position(3,3).get_square(board=board)}")
@@ -271,7 +266,6 @@ def test_get_rendering_string():
 
 
 def test_piece_captured():
-
     # DAD
     empty = copy.deepcopy(empty_board)
     pos = Position(2, 1)
@@ -624,3 +618,8 @@ def test_king_is_captured():
 
     king_pos.right().set_square(board=random_captured, piece=None)
     assert not Hnefatafl.king_is_captured(king_pos=king_pos, board=random_captured)
+
+
+def test_my_step():
+    # TODO
+    pass
