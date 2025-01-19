@@ -86,9 +86,7 @@ default_board: Board = [
 
 
 def test_get_attackers():
-    hnefatafl = Hnefatafl()
-
-    attackers = hnefatafl.get_attackers(board=copy.deepcopy(default_board))
+    attackers = Hnefatafl.get_attackers(copy.deepcopy(default_board))
     expected_attackers: List[Position] = [
         Position(y=0, x=3),
         Position(y=1, x=3),
@@ -105,9 +103,7 @@ def test_get_attackers():
 
 
 def test_get_defenders():
-    hnefatafl = Hnefatafl()
-
-    defenders = hnefatafl.get_defenders(board=copy.deepcopy(default_board))
+    defenders = Hnefatafl.get_defenders(board=copy.deepcopy(default_board))
     expected_defenders: List[Position] = [
         Position(y=2, x=3),
         Position(y=3, x=2),
@@ -120,7 +116,6 @@ def test_get_defenders():
 
 
 def test_get_possible_dests_from_pos():
-    hnefatafl = Hnefatafl()
 
     board_1: Board = [
         [None, PieceType.ATTACKER, None, None, None, None, None],
@@ -131,7 +126,7 @@ def test_get_possible_dests_from_pos():
         [None] * 7,
         [None] * 7,
     ]
-    res = hnefatafl.get_possible_dests_from_pos(
+    res = Hnefatafl.get_possible_dests_from_pos(
         board=board_1,
         start_pos=Position(y=0, x=1),
         player=PlayerRole.ATTACKER,
@@ -145,43 +140,41 @@ def test_get_possible_moves():
 
 
 def test_piece_belongs_to_player():
-    hnefatafl = Hnefatafl()
 
     # Attacker, Attacker
-    res = hnefatafl.piece_belongs_to_player(
+    res = Hnefatafl.piece_belongs_to_player(
         piece=PieceType.ATTACKER, player=PlayerRole.ATTACKER
     )
     assert res
 
     # Attacker, Defender
-    res = hnefatafl.piece_belongs_to_player(
+    res = Hnefatafl.piece_belongs_to_player(
         piece=PieceType.ATTACKER, player=PlayerRole.DEFENDER
     )
     assert not res
 
     # None, Attacker
-    res = hnefatafl.piece_belongs_to_player(piece=None, player=PlayerRole.ATTACKER)
+    res = Hnefatafl.piece_belongs_to_player(piece=None, player=PlayerRole.ATTACKER)
     assert not res
 
     # None, Defender
-    res = hnefatafl.piece_belongs_to_player(piece=None, player=PlayerRole.DEFENDER)
+    res = Hnefatafl.piece_belongs_to_player(piece=None, player=PlayerRole.DEFENDER)
     assert not res
 
     # King, Attacker
-    res = hnefatafl.piece_belongs_to_player(
+    res = Hnefatafl.piece_belongs_to_player(
         piece=PieceType.KING, player=PlayerRole.ATTACKER
     )
     assert not res
 
     # King, Defender
-    res = hnefatafl.piece_belongs_to_player(
+    res = Hnefatafl.piece_belongs_to_player(
         piece=PieceType.KING, player=PlayerRole.DEFENDER
     )
     assert res
 
 
 def test_game_over():
-    hnefatafl = Hnefatafl()
 
     board = copy.deepcopy(default_board)
 
@@ -189,7 +182,7 @@ def test_game_over():
     corner = Position(0, 0)
     corner.set_square(board=board, piece=PieceType.KING)
     Position(3, 3).set_square(board=board, piece=None)
-    res = hnefatafl.game_over(
+    res = Hnefatafl.game_over(
         king_pos=corner,
         king_captured=False,
         board=board,
@@ -200,7 +193,7 @@ def test_game_over():
 
     # king was captured -> Attackers win
     corner.set_square(board=board, piece=None)
-    res = hnefatafl.game_over(
+    res = Hnefatafl.game_over(
         king_pos=None,
         attackers=[Position(1, 1)],
         board=board,
@@ -217,61 +210,59 @@ def test_game_over():
 
 
 def test_is_opponent():
-    hnefatafl = Hnefatafl()
 
     # defender vs defender
-    res = hnefatafl.is_opponent(
+    res = Hnefatafl.is_opponent(
         piece_type=PieceType.DEFENDER, of_player=PlayerRole.DEFENDER
     )
     assert not res
 
     # defender vs attacker
-    res = hnefatafl.is_opponent(
+    res = Hnefatafl.is_opponent(
         piece_type=PieceType.ATTACKER, of_player=PlayerRole.DEFENDER
     )
     assert res
 
     # defender vs king
-    res = hnefatafl.is_opponent(
+    res = Hnefatafl.is_opponent(
         piece_type=PieceType.KING, of_player=PlayerRole.DEFENDER
     )
     assert not res
 
     # defender vs None
-    res = hnefatafl.is_opponent(
+    res = Hnefatafl.is_opponent(
         piece_type=None,
         of_player=PlayerRole.DEFENDER,
     )
     assert not res
 
     # attacker vs attacker
-    res = hnefatafl.is_opponent(
+    res = Hnefatafl.is_opponent(
         piece_type=PieceType.ATTACKER, of_player=PlayerRole.ATTACKER
     )
     assert not res
 
     # attacker vs defender
-    res = hnefatafl.is_opponent(
+    res = Hnefatafl.is_opponent(
         piece_type=PieceType.DEFENDER, of_player=PlayerRole.ATTACKER
     )
     assert res
 
     # attacker vs king
-    res = hnefatafl.is_opponent(
+    res = Hnefatafl.is_opponent(
         piece_type=PieceType.KING, of_player=PlayerRole.ATTACKER
     )
     assert res
 
     # attacker vs None
-    res = hnefatafl.is_opponent(piece_type=None, of_player=PlayerRole.ATTACKER)
+    res = Hnefatafl.is_opponent(piece_type=None, of_player=PlayerRole.ATTACKER)
     assert not res
 
 
 def test_get_rendering_string():
-    hnefatafl = Hnefatafl()
 
     board = copy.deepcopy(default_board)
-    res = hnefatafl.get_rendering_string(board=board)
+    res = Hnefatafl.get_rendering_string(board=board)
     print(f"at (3,3) is: {Position(3,3).get_square(board=board)}")
     assert (
         res
@@ -280,7 +271,6 @@ def test_get_rendering_string():
 
 
 def test_piece_captured():
-    hnefatafl = Hnefatafl()
 
     # DAD
     empty = copy.deepcopy(empty_board)
@@ -288,7 +278,7 @@ def test_piece_captured():
     pos.set_square(board=empty, piece=PieceType.ATTACKER)
     pos.left().set_square(board=empty, piece=PieceType.DEFENDER)
     pos.right().set_square(board=empty, piece=PieceType.DEFENDER)
-    assert hnefatafl.piece_captured(
+    assert Hnefatafl.piece_captured(
         new_pos=pos.left(),
         maybe_captured=pos,
         other_side=pos.right(),
@@ -303,7 +293,7 @@ def test_piece_captured():
     pos.set_square(board=empty, piece=PieceType.DEFENDER)
     pos.left().set_square(board=empty, piece=PieceType.ATTACKER)
     pos.right().set_square(board=empty, piece=PieceType.ATTACKER)
-    assert hnefatafl.piece_captured(
+    assert Hnefatafl.piece_captured(
         new_pos=pos.left(),
         maybe_captured=pos,
         other_side=pos.right(),
@@ -318,7 +308,7 @@ def test_piece_captured():
     pos.set_square(board=empty, piece=PieceType.ATTACKER)
     pos.left().set_square(board=empty, piece=PieceType.KING)
     pos.right().set_square(board=empty, piece=PieceType.DEFENDER)
-    assert hnefatafl.piece_captured(
+    assert Hnefatafl.piece_captured(
         new_pos=pos.left(),
         maybe_captured=pos,
         other_side=pos.right(),
@@ -333,7 +323,7 @@ def test_piece_captured():
     pos.set_square(board=empty, piece=PieceType.DEFENDER)
     pos.left().set_square(board=empty, piece=PieceType.KING)
     pos.right().set_square(board=empty, piece=PieceType.ATTACKER)
-    assert not hnefatafl.piece_captured(
+    assert not Hnefatafl.piece_captured(
         new_pos=pos.left(),
         maybe_captured=pos,
         other_side=pos.right(),
@@ -350,7 +340,7 @@ def test_piece_captured():
     pos.set_square(board=empty, piece=PieceType.ATTACKER)
     pos.up().set_square(board=empty, piece=PieceType.DEFENDER)
     pos.down().set_square(board=empty, piece=PieceType.DEFENDER)
-    assert hnefatafl.piece_captured(
+    assert Hnefatafl.piece_captured(
         new_pos=pos.up(),
         maybe_captured=pos,
         other_side=pos.down(),
@@ -367,7 +357,7 @@ def test_piece_captured():
     pos.set_square(board=empty, piece=PieceType.DEFENDER)
     pos.up().set_square(board=empty, piece=PieceType.ATTACKER)
     pos.down().set_square(board=empty, piece=PieceType.ATTACKER)
-    assert hnefatafl.piece_captured(
+    assert Hnefatafl.piece_captured(
         new_pos=pos.up(),
         maybe_captured=pos,
         other_side=pos.down(),
@@ -384,7 +374,7 @@ def test_piece_captured():
     pos.set_square(board=empty, piece=PieceType.DEFENDER)
     pos.up().set_square(board=empty, piece=PieceType.KING)
     pos.down().set_square(board=empty, piece=PieceType.ATTACKER)
-    assert not hnefatafl.piece_captured(
+    assert not Hnefatafl.piece_captured(
         new_pos=pos.up(),
         maybe_captured=pos,
         other_side=pos.down(),
@@ -401,7 +391,7 @@ def test_piece_captured():
     pos.set_square(board=empty, piece=PieceType.ATTACKER)
     pos.up().set_square(board=empty, piece=PieceType.KING)
     pos.down().set_square(board=empty, piece=PieceType.DEFENDER)
-    assert hnefatafl.piece_captured(
+    assert Hnefatafl.piece_captured(
         new_pos=pos.up(),
         maybe_captured=pos,
         other_side=pos.down(),
@@ -415,7 +405,7 @@ def test_piece_captured():
     pos = Position(y=0, x=1)
     pos.set_square(board=empty, piece=PieceType.DEFENDER)
     pos.right().set_square(board=empty, piece=PieceType.ATTACKER)
-    assert hnefatafl.piece_captured(
+    assert Hnefatafl.piece_captured(
         new_pos=pos.right(),
         maybe_captured=pos,
         other_side=pos.left(),
@@ -429,7 +419,7 @@ def test_piece_captured():
     pos = Position(y=0, x=1)
     pos.set_square(board=empty, piece=PieceType.ATTACKER)
     pos.right().set_square(board=empty, piece=PieceType.DEFENDER)
-    assert hnefatafl.piece_captured(
+    assert Hnefatafl.piece_captured(
         new_pos=pos.right(),
         maybe_captured=pos,
         other_side=pos.left(),
@@ -445,7 +435,7 @@ def test_piece_captured():
     pos = Position(y=Hnefatafl.DIMENSION - 2, x=0)
     pos.set_square(board=empty, piece=PieceType.DEFENDER)
     pos.down().set_square(board=empty, piece=PieceType.ATTACKER)
-    assert hnefatafl.piece_captured(
+    assert Hnefatafl.piece_captured(
         new_pos=pos.down(),
         maybe_captured=pos,
         other_side=pos.up(),
@@ -461,7 +451,7 @@ def test_piece_captured():
     pos = Position(y=Hnefatafl.DIMENSION - 2, x=0)
     pos.set_square(board=empty, piece=PieceType.ATTACKER)
     pos.down().set_square(board=empty, piece=PieceType.DEFENDER)
-    assert hnefatafl.piece_captured(
+    assert Hnefatafl.piece_captured(
         new_pos=pos.down(),
         maybe_captured=pos,
         other_side=pos.up(),
@@ -475,7 +465,7 @@ def test_piece_captured():
     pos = Position(y=3, x=4)
     pos.set_square(board=empty, piece=PieceType.DEFENDER)
     pos.right().set_square(board=empty, piece=PieceType.ATTACKER)
-    assert hnefatafl.piece_captured(
+    assert Hnefatafl.piece_captured(
         new_pos=pos.right(),
         maybe_captured=pos,
         other_side=pos.left(),
@@ -489,7 +479,7 @@ def test_piece_captured():
     pos = Position(y=3, x=4)
     pos.set_square(board=empty, piece=PieceType.ATTACKER)
     pos.right().set_square(board=empty, piece=PieceType.DEFENDER)
-    assert hnefatafl.piece_captured(
+    assert Hnefatafl.piece_captured(
         new_pos=pos.right(),
         maybe_captured=pos,
         other_side=pos.left(),
@@ -505,7 +495,7 @@ def test_piece_captured():
     pos = Position(y=2, x=3)
     pos.set_square(board=empty, piece=PieceType.DEFENDER)
     pos.down().set_square(board=empty, piece=PieceType.ATTACKER)
-    assert hnefatafl.piece_captured(
+    assert Hnefatafl.piece_captured(
         new_pos=pos.down(),
         maybe_captured=pos,
         other_side=pos.up(),
@@ -521,7 +511,7 @@ def test_piece_captured():
     pos = Position(y=2, x=3)
     pos.set_square(board=empty, piece=PieceType.ATTACKER)
     pos.down().set_square(board=empty, piece=PieceType.DEFENDER)
-    assert hnefatafl.piece_captured(
+    assert Hnefatafl.piece_captured(
         new_pos=pos.down(),
         maybe_captured=pos,
         other_side=pos.up(),
@@ -536,7 +526,7 @@ def test_piece_captured():
     pos = Position(y=3, x=4)
     pos.set_square(board=empty, piece=PieceType.DEFENDER)
     pos.right().set_square(board=empty, piece=PieceType.ATTACKER)
-    assert not hnefatafl.piece_captured(
+    assert not Hnefatafl.piece_captured(
         new_pos=pos.right(),
         maybe_captured=pos,
         other_side=pos.left(),
@@ -551,7 +541,7 @@ def test_piece_captured():
     pos = Position(y=3, x=4)
     pos.set_square(board=empty, piece=PieceType.ATTACKER)
     pos.right().set_square(board=empty, piece=PieceType.DEFENDER)
-    assert hnefatafl.piece_captured(
+    assert Hnefatafl.piece_captured(
         new_pos=pos.right(),
         maybe_captured=pos,
         other_side=pos.left(),
@@ -568,7 +558,7 @@ def test_piece_captured():
     pos = Position(y=2, x=3)
     pos.set_square(board=empty, piece=PieceType.DEFENDER)
     pos.down().set_square(board=empty, piece=PieceType.ATTACKER)
-    assert not hnefatafl.piece_captured(
+    assert not Hnefatafl.piece_captured(
         new_pos=pos.down(),
         maybe_captured=pos,
         other_side=pos.up(),
@@ -585,7 +575,7 @@ def test_piece_captured():
     pos = Position(y=2, x=3)
     pos.set_square(board=empty, piece=PieceType.ATTACKER)
     pos.down().set_square(board=empty, piece=PieceType.DEFENDER)
-    assert hnefatafl.piece_captured(
+    assert Hnefatafl.piece_captured(
         new_pos=pos.down(),
         maybe_captured=pos,
         other_side=pos.up(),
@@ -601,19 +591,17 @@ def test_piece_captures_opponent():
 
 
 def test_king_is_captured():
-    hnefatafl = Hnefatafl()
-
     # king is on throne and surrounded by attackers
     middle_captured = copy.deepcopy(default_board)
     Position(y=2, x=3).set_square(board=middle_captured, piece=PieceType.ATTACKER)
     Position(y=3, x=2).set_square(board=middle_captured, piece=PieceType.ATTACKER)
     Position(y=3, x=4).set_square(board=middle_captured, piece=PieceType.ATTACKER)
     Position(y=4, x=3).set_square(board=middle_captured, piece=PieceType.ATTACKER)
-    assert hnefatafl.king_is_captured(Position(3, 3), middle_captured)
+    assert Hnefatafl.king_is_captured(Position(3, 3), middle_captured)
 
     # king is on throne, but not fully surrounded by attackers
     Position(y=4, x=3).set_square(board=middle_captured, piece=None)
-    assert not hnefatafl.king_is_captured(Position(3, 3), middle_captured)
+    assert not Hnefatafl.king_is_captured(Position(3, 3), middle_captured)
 
     # king is next to throne and surrounded by attackers on other 3 sides
     next_to_throne_captured = copy.deepcopy(empty_board)
@@ -622,7 +610,7 @@ def test_king_is_captured():
     king_pos.up().set_square(board=next_to_throne_captured, piece=PieceType.ATTACKER)
     king_pos.left().set_square(board=next_to_throne_captured, piece=PieceType.ATTACKER)
     king_pos.right().set_square(board=next_to_throne_captured, piece=PieceType.ATTACKER)
-    assert hnefatafl.king_is_captured(king_pos=king_pos, board=next_to_throne_captured)
+    assert Hnefatafl.king_is_captured(king_pos=king_pos, board=next_to_throne_captured)
 
     # king is on "random" square (not restricted, not throne, not next to throne) and captured
     random_captured = copy.deepcopy(empty_board)
@@ -632,7 +620,7 @@ def test_king_is_captured():
     king_pos.down().set_square(board=random_captured, piece=PieceType.ATTACKER)
     king_pos.left().set_square(board=random_captured, piece=PieceType.ATTACKER)
     king_pos.right().set_square(board=random_captured, piece=PieceType.ATTACKER)
-    assert hnefatafl.king_is_captured(king_pos=king_pos, board=random_captured)
+    assert Hnefatafl.king_is_captured(king_pos=king_pos, board=random_captured)
 
     king_pos.right().set_square(board=random_captured, piece=None)
-    assert not hnefatafl.king_is_captured(king_pos=king_pos, board=random_captured)
+    assert not Hnefatafl.king_is_captured(king_pos=king_pos, board=random_captured)
