@@ -347,6 +347,54 @@ class Hnefatafl:
 
         return None
 
+    def king_is_captured(self, king_pos: Position, board: Board) -> bool:
+
+        if king_pos.get_square(board=board) != PieceType.KING:
+            raise ValueError("King not in given king_pos on given board")
+
+        # check if moved piece captures the king
+        if (
+            king_pos.up().get_square(board) == PieceType.ATTACKER
+            and king_pos.left().get_square(board) == PieceType.ATTACKER
+            and king_pos.right().get_square(board) == PieceType.ATTACKER
+            and king_pos.down().get_square(board) == PieceType.ATTACKER
+        ):
+            return True
+        # 2. king is next to the throne
+        # 2.1 above
+        if king_pos == Hnefatafl.MIDDLE.up():
+            if (
+                king_pos.up().get_square(board) == PieceType.ATTACKER
+                and king_pos.left().get_square(board) == PieceType.ATTACKER
+                and king_pos.right().get_square(board) == PieceType.ATTACKER
+            ):
+                return True
+        # 2.2 below
+        if king_pos == Hnefatafl.MIDDLE.down():
+            if (
+                king_pos.down().get_square(board) == PieceType.ATTACKER
+                and king_pos.left().get_square(board) == PieceType.ATTACKER
+                and king_pos.right().get_square(board) == PieceType.ATTACKER
+            ):
+                return True
+        # 2.3 to the left
+        if king_pos == Hnefatafl.MIDDLE.left():
+            if (
+                king_pos.left().get_square(board) == PieceType.ATTACKER
+                and king_pos.up().get_square(board) == PieceType.ATTACKER
+                and king_pos.down().get_square(board) == PieceType.ATTACKER
+            ):
+                return True
+        # 2.4 to the right
+        if king_pos == Hnefatafl.MIDDLE.right():
+            if (
+                king_pos.right().get_square(board) == PieceType.ATTACKER
+                and king_pos.up().get_square(board) == PieceType.ATTACKER
+                and king_pos.down().get_square(board) == PieceType.ATTACKER
+            ):
+                return True
+        return False
+
     def step(self, action):
         reward = 0
         # check if action is legal
@@ -384,63 +432,11 @@ class Hnefatafl:
             capture_res.set_square(self.board, None)
             reward += Hnefatafl.CAPTURE_REWARD
 
-        # check if moved piece captures the king
-        if (
-            Hnefatafl.MIDDLE.up().get_square(self.board) == PieceType.ATTACKER
-            and Hnefatafl.MIDDLE.left().get_square(self.board) == PieceType.ATTACKER
-            and Hnefatafl.MIDDLE.right().get_square(self.board) == PieceType.ATTACKER
-            and Hnefatafl.MIDDLE.down().get_square(self.board) == PieceType.ATTACKER
-        ):
+        # check if piece captures king
+        if self.king_is_captured(king_pos=self.king.position, board=self.board):
             print("King captured")
+            self.king.position.set_square(self.board, None)
             self.king.captured = True
-            Hnefatafl.MIDDLE.set_square(self.board, None)
-        # 2. king is next to the throne
-        # 2.1 above
-        if self.king.position == Hnefatafl.MIDDLE.up():
-            if (
-                self.king.position.up().get_square(self.board) == PieceType.ATTACKER
-                and self.king.position.left().get_square(self.board)
-                == PieceType.ATTACKER
-                and self.king.position.right().get_square(self.board)
-                == PieceType.ATTACKER
-            ):
-                print("King captured")
-                self.king.position.set_square(self.board, None)
-                self.king.captured = True
-        # 2.2 below
-        if self.king.position == Hnefatafl.MIDDLE.down():
-            if (
-                self.king.position.down().get_square(self.board) == PieceType.ATTACKER
-                and self.king.position.left().get_square(self.board)
-                == PieceType.ATTACKER
-                and self.king.position.right().get_square(self.board)
-                == PieceType.ATTACKER
-            ):
-                print("King captured")
-                self.king.position.set_square(self.board, None)
-                self.king.captured = True
-        # 2.3 to the left
-        if self.king.position == Hnefatafl.MIDDLE.left():
-            if (
-                self.king.position.left().get_square(self.board) == PieceType.ATTACKER
-                and self.king.position.up().get_square(self.board) == PieceType.ATTACKER
-                and self.king.position.down().get_square(self.board)
-                == PieceType.ATTACKER
-            ):
-                print("King captured")
-                self.king.position.set_square(self.board, None)
-                self.king.captured = True
-        # 2.4 to the right
-        if self.king.position == Hnefatafl.MIDDLE.right():
-            if (
-                self.king.position.right().get_square(self.board) == PieceType.ATTACKER
-                and self.king.position.up().get_square(self.board) == PieceType.ATTACKER
-                and self.king.position.down().get_square(self.board)
-                == PieceType.ATTACKER
-            ):
-                print("King captured")
-                self.king.position.set_square(self.board, None)
-                self.king.captured = True
 
         # check if the game is over
         game_result, player = self.game_over(
