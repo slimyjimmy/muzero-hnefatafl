@@ -1,4 +1,5 @@
 import copy
+from games.hnefatafl_stuff.direction import Direction
 from games.hnefatafl_stuff.hnefatafl import Hnefatafl
 from games.hnefatafl_stuff.piece_type import PieceType
 from games.hnefatafl_stuff.position import Position
@@ -91,3 +92,42 @@ def test_is_open_to_piece():
     assert not Hnefatafl.MIDDLE.is_open_to_piece(piece=PieceType.ATTACKER)
     assert not Hnefatafl.MIDDLE.is_open_to_piece(piece=PieceType.DEFENDER)
     assert Hnefatafl.MIDDLE.is_open_to_piece(piece=PieceType.KING)
+
+
+def test_get_adjacent_position():
+    pos = Position(y=2, x=2)
+
+    # down
+    assert pos.get_adjacent_position(direction=Direction.DOWN) == pos.down(steps=1)
+    assert pos.get_adjacent_position(direction=Direction.DOWN, steps=2) == pos.down(
+        steps=2
+    )
+    # up
+    assert pos.get_adjacent_position(direction=Direction.UP) == pos.up(steps=1)
+    assert pos.get_adjacent_position(direction=Direction.UP, steps=2) == pos.up(steps=2)
+    # left
+    assert pos.get_adjacent_position(direction=Direction.LEFT) == pos.left(steps=1)
+    assert pos.get_adjacent_position(direction=Direction.LEFT, steps=2) == pos.left(
+        steps=2
+    )
+    # right
+    assert pos.get_adjacent_position(direction=Direction.RIGHT) == pos.right(steps=1)
+    assert pos.get_adjacent_position(direction=Direction.RIGHT, steps=2) == pos.right(
+        steps=2
+    )
+
+
+def test_is_adjacent():
+    pos = Position(2, 2)
+
+    # down
+    assert pos.is_adjacent(pos.down()) == Direction.DOWN
+
+    # up
+    assert pos.is_adjacent(pos.up()) == Direction.UP
+
+    # left
+    assert pos.is_adjacent(pos.left()) == Direction.LEFT
+
+    # right
+    assert pos.is_adjacent(pos.right()) == Direction.RIGHT
