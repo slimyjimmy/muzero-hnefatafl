@@ -1,5 +1,6 @@
 import datetime
 import pathlib
+from typing import List
 import torch
 
 from games.hnefatafl_stuff.hnefatafl import Hnefatafl
@@ -21,7 +22,7 @@ class MuZeroConfig:
 
         # Available actions of the game
         # Dimenions^4 because we need to specify the start and end position of the piece
-        self.action_space = list(range(Hnefatafl.DIMENSION ** 4))  # Fixed list of all possible actions. You should only edit the length
+        self.action_space = MuZeroConfig.get_action_space()  # Fixed list of all possible actions. You should only edit the length
         self.players = list(range(2))  # List of players. You should only edit the length
         self.stacked_observations = 0  # Number of previous observations and previous actions to add to the current observation
 
@@ -117,6 +118,10 @@ class MuZeroConfig:
             Positive float.
         """
         return 1
+
+    @classmethod
+    def get_action_space(cls) -> List[int]:
+        return list(range(Hnefatafl.DIMENSION**4))
 
 
 class Game(AbstractGame):
