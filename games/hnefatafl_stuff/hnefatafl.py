@@ -269,10 +269,10 @@ class Hnefatafl:
         if king_captured:
             print("king captured")
             return GameResult.WIN, PlayerRole.ATTACKER
-        # No Legal Moves
-        if len(Hnefatafl.get_possible_moves(board=board, player=player)) == 0:
+        # No Legal Moves -> handled in my_step
+        """if len(Hnefatafl.get_possible_moves(board=board, player=player)) == 0:
             print("no legal moves left")
-            return GameResult.DRAW, None
+            return GameResult.DRAW, None"""
         # All Attackers Are Eliminated
         if len(attackers) == 0:
             print("all attackers eleminated")
@@ -461,7 +461,7 @@ class Hnefatafl:
 
         # check if any moves left
         if len(Hnefatafl.get_possible_moves(board=board, player=player)) == 0:
-            return True, Hnefatafl.INVALID_ACTION_REWARD, board, king_pos
+            return True, Hnefatafl.LOSS_REWARD, board, king_pos
 
         # check if move is legal
         if not Hnefatafl.piece_belongs_to_player(

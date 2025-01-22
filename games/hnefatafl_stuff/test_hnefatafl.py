@@ -666,3 +666,17 @@ def test_king_is_captured():
 def test_my_step():
     # TODO
     pass
+
+
+def test_action_to_move():
+    hnefatafl = Hnefatafl()
+    start_pos, end_pos = hnefatafl.action_to_move(766)
+    assert start_pos == Position(y=1, x=2) and end_pos == Position(y=3, x=4)
+
+
+def test_move_to_action():
+    hnefatafl = Hnefatafl()
+    start_pos = Position(y=1, x=2)
+    end_pos = Position(y=3, x=4)
+    move = (start_pos, end_pos)
+    assert hnefatafl.move_to_action(move) == 766
