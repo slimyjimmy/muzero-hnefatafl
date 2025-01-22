@@ -4,6 +4,7 @@ from typing import List, Optional, Tuple
 
 import numpy
 
+from games.hnefatafl_stuff.direction import Direction
 from games.hnefatafl_stuff.game_result import GameResult
 from games.hnefatafl_stuff.piece import Piece
 from games.hnefatafl_stuff.piece_type import PieceType
@@ -306,7 +307,11 @@ class Hnefatafl:
         player: PlayerRole,
         board: Board,
         king_pos: Position,
+        capture_king: bool = False,
     ) -> bool:
+        """
+        Checks if a piece (only Attacker of Defender, NOT king) was captured.
+        """
         if not new_pos.is_within_board():
             print("1")
             return False
@@ -316,15 +321,17 @@ class Hnefatafl:
         if not other_side.is_within_board():
             print("3")
             return False
+        if (
+            maybe_captured.get_square(board=board) == PieceType.KING
+            and not capture_king
+        ):
+            return False  # capturing of king is not handled here (but in king_captured)
         if not Hnefatafl.is_opponent(
             maybe_captured.get_square(board),
             of_player=player,
         ):
             print("4")
             return False
-        if maybe_captured.get_square(board) == PieceType.KING:
-            print("5")
-            return False  # king can't be captured by two pieces
 
         # to capture maybe_captured, other_side can either be
         # - a piece belonging to current_player
@@ -349,64 +356,12 @@ class Hnefatafl:
         return False
 
     @classmethod
-    def piece_captures_opponent(
-        cls,
-        end_pos: Position,
-        board: Board,
-        player: PlayerRole,
-        king_pos: Position,
-    ) -> Optional[Position]:
-        """
-        Returns position of captured opponent if the piece moved to its new position `end_pos`captures an opponent.
-        Returns None otherwise.
-        """
-        if Hnefatafl.piece_captured(
-            new_pos=end_pos,
-            maybe_captured=end_pos.up(),
-            other_side=end_pos.up(2),
-            player=player,
-            board=board,
-            king_pos=king_pos,
-        ):
-            return end_pos.up()
-
-        if Hnefatafl.piece_captured(
-            new_pos=end_pos,
-            maybe_captured=end_pos.down(),
-            other_side=end_pos.down(2),
-            player=player,
-            board=board,
-            king_pos=king_pos,
-        ):
-            return end_pos.down()
-
-        if Hnefatafl.piece_captured(
-            new_pos=end_pos,
-            maybe_captured=end_pos.left(),
-            other_side=end_pos.left(2),
-            player=player,
-            board=board,
-            king_pos=king_pos,
-        ):
-            return end_pos.left()
-
-        if Hnefatafl.piece_captured(
-            new_pos=end_pos,
-            maybe_captured=end_pos.right(),
-            other_side=end_pos.right(2),
-            player=player,
-            board=board,
-            king_pos=king_pos,
-        ):
-            return end_pos.right()
-
-        return None
-
-    @classmethod
     def king_is_captured(
         cls,
         king_pos: Position,
         board: Board,
+        new_pos: Position,  # new position of moved piece
+        player: PlayerRole,
     ) -> bool:
 
         if king_pos.get_square(board=board) != PieceType.KING:
@@ -453,6 +408,33 @@ class Hnefatafl:
                 and king_pos.down().get_square(board) == PieceType.ATTACKER
             ):
                 return True
+
+        # king is in "random" position (not on/next to throne, on restricted field)
+        if (
+            king_pos not in Hnefatafl.CORNERS
+            and king_pos != Hnefatafl.MIDDLE
+            and king_pos
+            not in [
+                Hnefatafl.MIDDLE.up(),
+                Hnefatafl.MIDDLE.down(),
+                Hnefatafl.MIDDLE.left(),
+                Hnefatafl.MIDDLE.right(),
+            ]
+        ):
+            adjacent_dir = new_pos.is_adjacent(king_pos)
+            if adjacent_dir is not None:
+                if Hnefatafl.piece_captured(
+                    new_pos=new_pos,
+                    maybe_captured=king_pos,
+                    other_side=new_pos.get_adjacent_position(
+                        direction=adjacent_dir, steps=2
+                    ),
+                    player=player,
+                    board=board,
+                    king_pos=king_pos,
+                    capture_king=True,
+                ):
+                    return True
         return False
 
     @classmethod
@@ -499,18 +481,28 @@ class Hnefatafl:
             updated_king_pos = end_pos
 
         # check if adjacent piece (to move[1]) was captured
-        capture_res = Hnefatafl.piece_captures_opponent(
-            end_pos=end_pos,
-            board=board,
-            player=player,
-            king_pos=king_pos,
-        )
+        capture_res: Optional[Position] = None
+        for direction in Direction:
+            if Hnefatafl.piece_captured(
+                new_pos=end_pos,
+                maybe_captured=end_pos.get_adjacent_position(direction=direction),
+                other_side=end_pos.get_adjacent_position(direction=direction, steps=2),
+                player=player,
+                board=board,
+                king_pos=king_pos,
+            ):
+                capture_res = end_pos.get_adjacent_position(direction=direction)
         if not capture_res is None:
             capture_res.set_square(board, None)
             reward += Hnefatafl.CAPTURE_REWARD
 
         # check if king was captured
-        if Hnefatafl.king_is_captured(king_pos=updated_king_pos, board=board):
+        if Hnefatafl.king_is_captured(
+            king_pos=updated_king_pos,
+            board=board,
+            new_pos=end_pos,
+            player=player,
+        ):
             updated_king_pos.set_square(board=board, piece=None)
             updated_king_pos = Position(Position.INVALID, Position.INVALID)
             king_captured = True

@@ -1,4 +1,5 @@
 from typing import List, Optional
+from games.hnefatafl_stuff.direction import Direction
 from games.hnefatafl_stuff.piece_type import PieceType
 
 
@@ -12,6 +13,33 @@ class Position:
     def __init__(self, x: int, y: int):
         self.x = x
         self.y = y
+
+    def get_adjacent_position(self, direction: Direction, steps: int = 1) -> "Position":
+        if direction == Direction.UP:
+            return self.up(steps=steps)
+        if direction == Direction.DOWN:
+            return self.down(steps=steps)
+        if direction == Direction.LEFT:
+            return self.left(steps=steps)
+        if direction == Direction.RIGHT:
+            return self.right(steps=steps)
+        return None
+
+    def is_adjacent(self, other) -> Optional[Direction]:
+        """
+        Checks if self and other are adjacent to each other.
+        If so: returns the relative direction of other to self (ie: if other is above self -> Direction.UP)
+        Else: returns None
+        """
+        if self.up() == other:
+            return Direction.UP
+        if self.down() == other:
+            return Direction.DOWN
+        if self.right() == other:
+            return Direction.RIGHT
+        if self.left() == other:
+            return Direction.LEFT
+        return None
 
     def __eq__(self, other):
         if not isinstance(other, Position):

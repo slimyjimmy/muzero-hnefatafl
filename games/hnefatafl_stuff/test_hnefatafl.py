@@ -502,6 +502,70 @@ def test_piece_captured():
         king_pos=Position(3, 3),
     )
 
+    # AKA
+    empty = copy.deepcopy(empty_board)
+    pos = Position(2, 1)
+    pos.set_square(board=empty, piece=PieceType.KING)
+    pos.left().set_square(board=empty, piece=PieceType.ATTACKER)
+    pos.right().set_square(board=empty, piece=PieceType.ATTACKER)
+    assert not Hnefatafl.piece_captured(  # should not capture king, because capturing of king is handled in king_captured
+        new_pos=pos.left(),
+        maybe_captured=pos,
+        other_side=pos.right(),
+        player=PlayerRole.ATTACKER,
+        board=empty,
+        king_pos=Position(3, 3),
+    )
+
+    # A
+    # K
+    # A
+    empty = copy.deepcopy(empty_board)
+    pos = Position(2, 1)
+    pos.set_square(board=empty, piece=PieceType.KING)
+    pos.up().set_square(board=empty, piece=PieceType.ATTACKER)
+    pos.down().set_square(board=empty, piece=PieceType.ATTACKER)
+    assert not Hnefatafl.piece_captured(  # should not capture king, because capturing of king is handled in king_captured
+        new_pos=pos.up(),
+        maybe_captured=pos,
+        other_side=pos.down(),
+        player=PlayerRole.ATTACKER,
+        board=empty,
+        king_pos=Position(3, 3),
+    )
+
+    # DKD
+    empty = copy.deepcopy(empty_board)
+    pos = Position(2, 1)
+    pos.set_square(board=empty, piece=PieceType.KING)
+    pos.left().set_square(board=empty, piece=PieceType.DEFENDER)
+    pos.right().set_square(board=empty, piece=PieceType.DEFENDER)
+    assert not Hnefatafl.piece_captured(
+        new_pos=pos.left(),
+        maybe_captured=pos,
+        other_side=pos.right(),
+        player=PlayerRole.DEFENDER,
+        board=empty,
+        king_pos=Position(3, 3),
+    )
+
+    # D
+    # K
+    # D
+    empty = copy.deepcopy(empty_board)
+    pos = Position(2, 1)
+    pos.set_square(board=empty, piece=PieceType.KING)
+    pos.up().set_square(board=empty, piece=PieceType.DEFENDER)
+    pos.down().set_square(board=empty, piece=PieceType.DEFENDER)
+    assert not Hnefatafl.piece_captured(
+        new_pos=pos.up(),
+        maybe_captured=pos,
+        other_side=pos.down(),
+        player=PlayerRole.DEFENDER,
+        board=empty,
+        king_pos=Position(3, 3),
+    )
+
 
 def test_piece_captures_opponent():
     # TODO
@@ -515,11 +579,21 @@ def test_king_is_captured():
     Position(y=3, x=2).set_square(board=middle_captured, piece=PieceType.ATTACKER)
     Position(y=3, x=4).set_square(board=middle_captured, piece=PieceType.ATTACKER)
     Position(y=4, x=3).set_square(board=middle_captured, piece=PieceType.ATTACKER)
-    assert Hnefatafl.king_is_captured(Position(3, 3), middle_captured)
+    assert Hnefatafl.king_is_captured(
+        Position(3, 3),
+        middle_captured,
+        new_pos=Position(3, 2),
+        player=PlayerRole.ATTACKER,
+    )
 
     # king is on throne, but not fully surrounded by attackers
     Position(y=4, x=3).set_square(board=middle_captured, piece=None)
-    assert not Hnefatafl.king_is_captured(Position(3, 3), middle_captured)
+    assert not Hnefatafl.king_is_captured(
+        Position(3, 3),
+        middle_captured,
+        new_pos=Position(3, 2),
+        player=PlayerRole.ATTACKER,
+    )
 
     # king is next to throne and surrounded by attackers on other 3 sides
     next_to_throne_captured = copy.deepcopy(empty_board)
@@ -528,20 +602,65 @@ def test_king_is_captured():
     king_pos.up().set_square(board=next_to_throne_captured, piece=PieceType.ATTACKER)
     king_pos.left().set_square(board=next_to_throne_captured, piece=PieceType.ATTACKER)
     king_pos.right().set_square(board=next_to_throne_captured, piece=PieceType.ATTACKER)
-    assert Hnefatafl.king_is_captured(king_pos=king_pos, board=next_to_throne_captured)
+    assert Hnefatafl.king_is_captured(
+        king_pos=king_pos,
+        board=next_to_throne_captured,
+        new_pos=king_pos.up(),
+        player=PlayerRole.ATTACKER,
+    )
 
     # king is on "random" square (not restricted, not throne, not next to throne) and captured
+    # AKA
+    random_captured = copy.deepcopy(empty_board)
+    king_pos = Position(2, 1)
+    king_pos.set_square(board=random_captured, piece=PieceType.KING)
+    king_pos.left().set_square(board=random_captured, piece=PieceType.ATTACKER)
+    king_pos.right().set_square(board=random_captured, piece=PieceType.ATTACKER)
+    assert Hnefatafl.king_is_captured(
+        king_pos=king_pos,
+        board=random_captured,
+        new_pos=king_pos.left(),
+        player=PlayerRole.ATTACKER,
+    )
+
+    # A
+    # K
+    # A
     random_captured = copy.deepcopy(empty_board)
     king_pos = Position(2, 1)
     king_pos.set_square(board=random_captured, piece=PieceType.KING)
     king_pos.up().set_square(board=random_captured, piece=PieceType.ATTACKER)
     king_pos.down().set_square(board=random_captured, piece=PieceType.ATTACKER)
-    king_pos.left().set_square(board=random_captured, piece=PieceType.ATTACKER)
+    assert Hnefatafl.king_is_captured(
+        king_pos=king_pos,
+        board=random_captured,
+        new_pos=king_pos.up(),
+        player=PlayerRole.ATTACKER,
+    )
+    # DKD
+    random_captured = copy.deepcopy(empty_board)
+    king_pos = Position(2, 1)
+    king_pos.set_square(board=random_captured, piece=PieceType.KING)
+    king_pos.left().set_square(board=random_captured, piece=PieceType.DEFENDER)
+    king_pos.right().set_square(board=random_captured, piece=PieceType.DEFENDER)
+    assert not Hnefatafl.king_is_captured(
+        king_pos=king_pos,
+        board=random_captured,
+        new_pos=king_pos.left(),
+        player=PlayerRole.DEFENDER,
+    )
+    # DKA
+    random_captured = copy.deepcopy(empty_board)
+    king_pos = Position(2, 1)
+    king_pos.set_square(board=random_captured, piece=PieceType.KING)
+    king_pos.left().set_square(board=random_captured, piece=PieceType.DEFENDER)
     king_pos.right().set_square(board=random_captured, piece=PieceType.ATTACKER)
-    assert Hnefatafl.king_is_captured(king_pos=king_pos, board=random_captured)
-
-    king_pos.right().set_square(board=random_captured, piece=None)
-    assert not Hnefatafl.king_is_captured(king_pos=king_pos, board=random_captured)
+    assert not Hnefatafl.king_is_captured(
+        king_pos=king_pos,
+        board=random_captured,
+        new_pos=king_pos.right(),
+        player=PlayerRole.ATTACKER,
+    )
 
 
 def test_my_step():
