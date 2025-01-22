@@ -32,6 +32,7 @@ class Hnefatafl:
     LOWER_RIGHT = Position(DIMENSION - 1, DIMENSION - 1)
     CORNERS = [UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT]
     RESTRICTED_POSITIONS = [UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT, MIDDLE]
+    
 
     DEFAULT_BOARD: Board = [
         [
@@ -204,22 +205,29 @@ class Hnefatafl:
         return dests
 
     @classmethod
-    def get_possible_moves(cls, board: Board, player: PlayerRole) -> List[Move]:
+    def get_possible_moves(cls, board: Board, player: PlayerRole) -> List[Tuple[Position, int, int]]:
         """
-        Returns a list of possible moves for the current player.
+        Returns a list of possible moves for the current player. excluding restricted positions
         """
-        moves: List[Move] = []  # start_pos, end_pos
+        moves: List[Tuple[Position, int, int]] = []  # start_pos, direction, distance
         for i in range(Hnefatafl.DIMENSION):
             for j in range(Hnefatafl.DIMENSION):
-                pos: Position = Position(i, j)
+                start_pos = Position(i, j)
+
+                # skip restricted positions (corners) 
+                if start_pos in [Hnefatafl.UPPER_LEFT, Hnefatafl.UPPER_RIGHT, Hnefatafl.LOWER_LEFT, Hnefatafl.LOWER_RIGHT]:
+                    continue
+                
                 if Hnefatafl.piece_belongs_to_player(
-                    piece=pos.get_square(board), player=player
+                    piece=start_pos.get_square(board), player=player
                 ):
-                    possible_moves_from_pos = Hnefatafl.get_possible_dests_from_pos(
-                        pos, board, player
+                    possible_destinations = Hnefatafl.get_possible_dests_from_pos(
+                        start_pos, board, player
                     )
-                    for end_pos in possible_moves_from_pos:
-                        moves.append((pos, end_pos))
+
+                    for end_pos in possible_destinations:
+                        direction, distance = cls.get_direction_and_distance(start_pos, end_pos)
+                        moves.append((start_pos, direction, distance))
         return moves
 
     @classmethod
@@ -279,24 +287,82 @@ class Hnefatafl:
             return GameResult.WIN, PlayerRole.DEFENDER
         return GameResult.ONGOING, None
 
+   
+    @classmethod
+    def get_valid_start_positions(cls):
+        """
+        Returns a list of all valid start positions excluding restricted corners.
+        """
+        return [
+            Position(x, y)
+            for x in range(cls.DIMENSION)
+            for y in range(cls.DIMENSION)
+            if Position(x, y) not in cls.CORNERS
+        ]
+
     def move_to_action(self, move: Move) -> int:
         """
         Encode the action as an integer.
         """
         start_pos = move[0]
         end_pos = move[1]
-        _from = start_pos.x * Hnefatafl.DIMENSION + start_pos.y
-        _to = end_pos.x * Hnefatafl.DIMENSION + end_pos.y
-        return _from * Hnefatafl.DIMENSION**2 + _to
+        
+        valid_positions = Hnefatafl.get_valid_start_positions()
+
+        _from = valid_positions.index(start_pos)
+        direction, distance = self.get_direction_and_distance(start_pos, end_pos)
+
+        action = _from * (4 * 6) + direction * 6 + (distance -1) #4 directions times move of size max 6
+        return action
 
     def action_to_move(self, action: int) -> Move:
         """
         Decode the action from an integer into start_pos and end_pos.
         """
-        _from, _to = action // Hnefatafl.DIMENSION**2, action % Hnefatafl.DIMENSION**2
-        x0, y0 = _from // Hnefatafl.DIMENSION, _from % Hnefatafl.DIMENSION
-        x1, y1 = _to // Hnefatafl.DIMENSION, _to % Hnefatafl.DIMENSION
-        return (Position(x0, y0), Position(x1, y1))
+        # decode into start_index, direction and distance
+        _from = action // (4 * 6)
+        direction_distance = action % (4 *6)
+        direction = direction_distance // 6
+        distance = (direction_distance % 6) + 1
+
+        x0 = _from // Hnefatafl.DIMENSION
+        y0 = _from % Hnefatafl.DIMENSION
+        start_pos = Position(x0, y0)
+
+        # calculate end_pos based on direction and distance
+        if direction == 0: # east
+            end_pos = Position(x0 + distance, y0)
+        elif direction == 1: # west
+            end_pos = Position(x0 - distance, y0)
+        elif direction == 2: # north
+            end_pos = Position(x0, y0 + distance)
+        elif direction == 3: #south
+            end_pos = Position(x0, y0 - distance)
+        else:
+            raise ValueError("Invalid direction in action")
+
+        return start_pos, end_pos
+
+    @classmethod
+    def get_direction_and_distance(cls, start_pos: Position, end_pos: Position) -> Tuple[int, int]:
+        """
+        Calculate the direction and distance between two positions.
+        Directions are encoded as:
+        0 - East, 1 - West, 2 - North, 3 - South
+        """
+        dx = end_pos.x - start_pos.x
+        dy = end_pos.y - start_pos.y
+
+        if dx > 0 and dy == 0:
+            return 0, abs(dx) # east
+        elif dx < 0 and dy == 0:
+            return 1, abs(dx) # west
+        elif dy > 0 and dx == 0:
+            return 2, abs(dy) # north
+        elif dy < 0 and dx == 0:
+            return 3, abs(dy) # south
+
+        raise ValueError("Invalid move: Not a straight-line move.")
 
     @classmethod
     def piece_captured(

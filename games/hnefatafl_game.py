@@ -121,7 +121,13 @@ class MuZeroConfig:
 
     @classmethod
     def get_action_space(cls) -> List[int]:
-        return list(range(Hnefatafl.DIMENSION**4))
+        """
+        Define reduced action space:
+        - 45 start positions (7x7 board minus 4 corners)
+        - 4 directions (N, S, E, W)
+        - 6 distanced (1 to 6)
+        """
+        return list(range(45 * 4 *6)) # 1080 actions
 
 
 class Game(AbstractGame):
@@ -165,6 +171,8 @@ class Game(AbstractGame):
         Returns:
             An array of integers, subset of the action space.
         """
+        #possible_moves = self.env.get_possible_moves(self.env.board, self.env.current_player)
+        #legal_actions = [self.env.move_to_action(move) for move in possible_moves]
         # return self.env.legal_actions()
         return MuZeroConfig.get_action_space()  # Hnefatafl is too complex
 
