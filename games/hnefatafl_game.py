@@ -2,11 +2,7 @@ import datetime
 import pathlib
 import torch
 
-from games.hnefatafl_stuff.game_result import GameResult
 from games.hnefatafl_stuff.hnefatafl import Hnefatafl
-from games.hnefatafl_stuff.piece import Piece
-from games.hnefatafl_stuff.piece_type import PieceType
-from games.hnefatafl_stuff.player_role import PlayerRole
 from games.hnefatafl_stuff.position import Position
 
 from .abstract_game import AbstractGame
