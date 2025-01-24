@@ -680,3 +680,70 @@ def test_move_to_action():
     end_pos = Position(y=3, x=4)
     move = (start_pos, end_pos)
     assert hnefatafl.move_to_action(move) == 766
+
+def test_get_valid_start_positions():
+    Hnefatafl.DIMENSION = 7
+    Hnefatafl.CORNERS = [
+        Position(0, 0), 
+        Position(0, 6), 
+        Position(6, 0), 
+        Position(6, 6)
+    ]
+
+    expected_positions = [
+        Position(x, y)
+        for x in range(Hnefatafl.DIMENSION)
+        for y in range(Hnefatafl.DIMENSION)
+        if Position(x, y) not in Hnefatafl.CORNERS
+    ]
+
+    actual_positions = Hnefatafl.get_valid_start_positions()
+
+    assert len(actual_positions) == len(expected_positions), "Unexpected number of valid positions."
+    for pos in expected_positions:
+        assert pos in actual_positions, f"Expected position {pos} is missing."
+
+    for corner in Hnefatafl.CORNERS:
+        assert corner not in actual_positions, f"Corner position {corner} should not be valid."
+
+def test_move_to_action2():
+    # Setup for a 7x7 board
+    Hnefatafl.DIMENSION = 7
+    Hnefatafl.CORNERS = [
+        Position(0, 0),
+        Position(0, 6),
+        Position(6, 0),
+        Position(6, 6)
+    ]
+
+    # Mock valid positions
+    Hnefatafl.get_valid_start_positions = lambda: [
+        Position(x, y)
+        for x in range(Hnefatafl.DIMENSION)
+        for y in range(Hnefatafl.DIMENSION)
+        if Position(x, y) not in Hnefatafl.CORNERS
+    ]
+
+    hnefatafl = Hnefatafl()
+
+    # Test cases: (start_pos, end_pos, expected_action)
+    test_cases = [
+        (Position(1, 1), Position(1, 3), 0),  # Horizontal move to the right (east)
+        (Position(2, 2), Position(2, 0), 1),  # Horizontal move to the left (west)
+        (Position(3, 3), Position(0, 3), 2),  # Vertical move up (north)
+        (Position(4, 4), Position(6, 4), 3),  # Vertical move down (south)
+    ]
+
+    for start_pos, end_pos, expected_action in test_cases:
+        move = (start_pos, end_pos)
+        action = hnefatafl.move_to_action(move)
+        print(f"Move: {move}, Action: {action}")
+        assert action == expected_action, f"Failed for move: {move}. Expected {expected_action}, got {action}"
+
+    # Test invalid position
+    try:
+        invalid_move = (Position(10, 10), Position(10, 12))  # Invalid start position
+        hnefatafl.move_to_action(invalid_move)
+        assert False, "Expected exception for invalid position, but none was raised."
+    except ValueError as e:
+        print("Correctly raised ValueError for invalid position:", e)

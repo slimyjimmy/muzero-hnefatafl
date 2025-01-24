@@ -319,17 +319,19 @@ class Hnefatafl:
         """
         Decode the action from an integer into start_pos and end_pos.
         """
+        valid_positions = Hnefatafl.get_valid_start_positions()
+
         # decode into start_index, direction and distance
         _from = action // (4 * 6)
         direction_distance = action % (4 *6)
         direction = direction_distance // 6
         distance = (direction_distance % 6) + 1
 
-        x0 = _from // Hnefatafl.DIMENSION
-        y0 = _from % Hnefatafl.DIMENSION
-        start_pos = Position(x0, y0)
+        
+        start_pos = valid_positions[_from]
 
         # calculate end_pos based on direction and distance
+        x0, y0 = start_pos.x, start_pos.y
         if direction == 0: # east
             end_pos = Position(x0 + distance, y0)
         elif direction == 1: # west
