@@ -359,9 +359,9 @@ class Hnefatafl:
             return 0, abs(dx) # east
         elif dx < 0 and dy == 0:
             return 1, abs(dx) # west
-        elif dy > 0 and dx == 0:
-            return 2, abs(dy) # north
         elif dy < 0 and dx == 0:
+            return 2, abs(dy) # north
+        elif dy > 0 and dx == 0:
             return 3, abs(dy) # south
 
         raise ValueError("Invalid move: Not a straight-line move.")
