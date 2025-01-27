@@ -299,8 +299,22 @@ class MCTS:
             assert set(legal_actions).issubset(
                 set(self.config.action_space)
             ), "Legal actions should be a subset of the action space."
+
+            print("Action Space:", self.config.action_space)
+            print("Legal Actions (Values):", legal_actions)
+
+            # Ensure all legal actions exist in the action space
+            for action in legal_actions:
+               if action not in self.config.action_space:
+                   print(f"Illegal action detected: {action} not in action space")
+
+
+            #mapping to indices for logits, does not work properly
+            legal_action_indices = [self.config.action_space.index(a) for a in legal_actions]
+            print("Legal Actions (Indices):", legal_action_indices)
+
             root.expand(
-                legal_actions,
+                legal_action_indices,
                 to_play,
                 reward,
                 policy_logits,
