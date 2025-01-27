@@ -302,7 +302,8 @@ class MCTS:
 
 
             #mapping to indices for logits, does not work properly
-            legal_action_indices = [self.config.action_space.index(a) for a in legal_actions]
+            valid_legal_actions = [a for a in legal_actions if a in self.config.action_space]
+            legal_action_indices = [self.config.action_space.index(a) for a in valid_legal_actions]
             
 
             root.expand(
