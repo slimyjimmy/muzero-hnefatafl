@@ -300,18 +300,10 @@ class MCTS:
                 set(self.config.action_space)
             ), "Legal actions should be a subset of the action space."
 
-            print("Action Space:", self.config.action_space)
-            print("Legal Actions (Values):", legal_actions)
-
-            # Ensure all legal actions exist in the action space
-            for action in legal_actions:
-               if action not in self.config.action_space:
-                   print(f"Illegal action detected: {action} not in action space")
-
 
             #mapping to indices for logits, does not work properly
             legal_action_indices = [self.config.action_space.index(a) for a in legal_actions]
-            print("Legal Actions (Indices):", legal_action_indices)
+            
 
             root.expand(
                 legal_action_indices,
@@ -470,6 +462,12 @@ class Node:
         self.to_play = to_play
         self.reward = reward
         self.hidden_state = hidden_state
+
+        # Debugging: Check the size of policy_logits and validate actions
+        print("Policy Logits Shape:", len(policy_logits[0]))
+        print("Actions in Expand:", actions)
+        assert all(0 <= a < len(policy_logits[0]) for a in actions), "Action index out of bounds!"
+
 
         policy_values = torch.softmax(
             torch.tensor([policy_logits[0][a] for a in actions]), dim=0
