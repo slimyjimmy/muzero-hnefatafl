@@ -475,7 +475,12 @@ class Node:
         policy_values = torch.softmax(
             torch.tensor([policy_logits[0][a] for a in actions]), dim=0
         ).tolist()
-        policy = {a: policy_values[i] for i, a in enumerate(actions)}
+
+        #map indicies back to the original action values
+        original_actions = [self.config.action_space[a] for a in actions]
+        policy = {original_actions[i]: policy_values[i] for i in range(len(actions))}
+
+
         for action, p in policy.items():
             self.children[action] = Node(p)
 
