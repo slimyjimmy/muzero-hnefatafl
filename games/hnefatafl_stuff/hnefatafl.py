@@ -252,7 +252,6 @@ class Hnefatafl:
     def game_over(
         cls,
         board: Board,
-        player: PlayerRole,
         attackers: List[Position],
     ) -> Optional[Tuple[GameResult, PlayerRole]]:
         """
@@ -525,7 +524,6 @@ class Hnefatafl:
         # check if game is over
         game_result, result_player = Hnefatafl.game_over(
             board=board,
-            player=player,
             attackers=attackers,
         )
         done = game_result != GameResult.ONGOING

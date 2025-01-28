@@ -105,7 +105,6 @@ def test_game_over():
     Position(3, 3).set_square(board=board, piece=None)
     res = Hnefatafl.game_over(
         board=board,
-        player=PlayerRole.DEFENDER,
         attackers=[],
     )
     assert res[0] == GameResult.WIN and res[1] == PlayerRole.DEFENDER
@@ -115,7 +114,6 @@ def test_game_over():
     res = Hnefatafl.game_over(
         attackers=[Position(1, 1)],
         board=board,
-        player=PlayerRole.ATTACKER,
     )
     assert res[0] == GameResult.WIN and res[1] == PlayerRole.ATTACKER
 
