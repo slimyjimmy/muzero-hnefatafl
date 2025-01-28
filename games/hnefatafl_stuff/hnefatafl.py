@@ -455,7 +455,6 @@ class Hnefatafl:
     ]:  # done, reward, updated_board
         done = False
         reward = 0
-        king_captured = False
 
         start_pos, end_pos = move
 
@@ -515,6 +514,7 @@ class Hnefatafl:
             new_pos=end_pos,
             player=player,
         ):
+            king_pos = Hnefatafl.get_king(board=board)
             king_pos.set_square(board=board, piece=None)
             king_pos = Position(Position.INVALID, Position.INVALID)
             return True, reward, board
