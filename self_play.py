@@ -302,8 +302,7 @@ class MCTS:
 
 
             #mapping to indices for logits, does not work properly
-            valid_legal_actions = [a for a in legal_actions if a in self.config.action_space]
-            legal_action_indices = [self.config.action_space.index(a) for a in valid_legal_actions]
+            legal_action_indices = [self.config.action_space.index(a) for a in legal_actions]
             
 
             root.expand(
@@ -349,8 +348,12 @@ class MCTS:
             )
             value = models.support_to_scalar(value, self.config.support_size).item()
             reward = models.support_to_scalar(reward, self.config.support_size).item()
+
+            # Map action space to indices
+            action_indices = list(range(len(self.config.action_space)))  # Indices from 0 to len(action_space) - 1
+
             node.expand(
-                self.config.action_space,
+                action_indices,
                 virtual_to_play,
                 reward,
                 policy_logits,
@@ -464,9 +467,8 @@ class Node:
         self.reward = reward
         self.hidden_state = hidden_state
 
-        # Debugging: Check the size of policy_logits and validate actions
-        print("Policy Logits Shape:", len(policy_logits[0]))
-        print("Actions in Expand:", actions)
+
+        # Debugging
         assert all(0 <= a < len(policy_logits[0]) for a in actions), "Action index out of bounds!"
 
 
