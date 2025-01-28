@@ -104,8 +104,6 @@ def test_game_over():
     corner.set_square(board=board, piece=PieceType.KING)
     Position(3, 3).set_square(board=board, piece=None)
     res = Hnefatafl.game_over(
-        king_pos=corner,
-        king_captured=False,
         board=board,
         player=PlayerRole.DEFENDER,
         attackers=[],
@@ -115,10 +113,8 @@ def test_game_over():
     # king was captured -> Attackers win
     corner.set_square(board=board, piece=None)
     res = Hnefatafl.game_over(
-        king_pos=None,
         attackers=[Position(1, 1)],
         board=board,
-        king_captured=True,
         player=PlayerRole.ATTACKER,
     )
     assert res[0] == GameResult.WIN and res[1] == PlayerRole.ATTACKER
@@ -202,7 +198,6 @@ def test_piece_captured():
         other_side=pos.right(),
         player=PlayerRole.DEFENDER,
         board=empty,
-        king_pos=Position(3, 3),
     )
 
     # ADA
@@ -217,7 +212,6 @@ def test_piece_captured():
         other_side=pos.right(),
         player=PlayerRole.ATTACKER,
         board=empty,
-        king_pos=Position(3, 3),
     )
 
     # KAD
@@ -232,7 +226,6 @@ def test_piece_captured():
         other_side=pos.right(),
         player=PlayerRole.DEFENDER,
         board=empty,
-        king_pos=pos.left(),
     )
 
     # KDA
@@ -247,7 +240,6 @@ def test_piece_captured():
         other_side=pos.right(),
         player=PlayerRole.DEFENDER,
         board=empty,
-        king_pos=pos.left(),
     )
 
     # D
@@ -264,7 +256,6 @@ def test_piece_captured():
         other_side=pos.down(),
         player=PlayerRole.DEFENDER,
         board=empty,
-        king_pos=Position(3, 3),
     )
 
     # A
@@ -281,7 +272,6 @@ def test_piece_captured():
         other_side=pos.down(),
         player=PlayerRole.ATTACKER,
         board=empty,
-        king_pos=Position(3, 3),
     )
 
     # K
@@ -298,7 +288,6 @@ def test_piece_captured():
         other_side=pos.down(),
         player=PlayerRole.DEFENDER,
         board=empty,
-        king_pos=pos.up(),
     )
 
     # K
@@ -315,7 +304,6 @@ def test_piece_captured():
         other_side=pos.down(),
         player=PlayerRole.DEFENDER,
         board=empty,
-        king_pos=pos.up(),
     )
 
     # RDA (R = restricted field)
@@ -329,7 +317,6 @@ def test_piece_captured():
         other_side=pos.left(),
         player=PlayerRole.ATTACKER,
         board=empty,
-        king_pos=Position(3, 3),
     )
 
     # RAD
@@ -343,7 +330,6 @@ def test_piece_captured():
         other_side=pos.left(),
         player=PlayerRole.DEFENDER,
         board=empty,
-        king_pos=Position(3, 3),
     )
 
     # R
@@ -359,7 +345,6 @@ def test_piece_captured():
         other_side=pos.up(),
         player=PlayerRole.ATTACKER,
         board=empty,
-        king_pos=Position(3, 3),
     )
 
     # R
@@ -375,7 +360,6 @@ def test_piece_captured():
         other_side=pos.up(),
         player=PlayerRole.DEFENDER,
         board=empty,
-        king_pos=Position(3, 3),
     )
 
     # EDA (E = empty throne)
@@ -389,7 +373,6 @@ def test_piece_captured():
         other_side=pos.left(),
         player=PlayerRole.ATTACKER,
         board=empty,
-        king_pos=Position(0, 0),
     )
 
     # EAD (E = empty throne)
@@ -403,7 +386,6 @@ def test_piece_captured():
         other_side=pos.left(),
         player=PlayerRole.DEFENDER,
         board=empty,
-        king_pos=Position(0, 0),
     )
 
     # E
@@ -419,7 +401,6 @@ def test_piece_captured():
         other_side=pos.up(),
         player=PlayerRole.ATTACKER,
         board=empty,
-        king_pos=Position(0, 0),
     )
 
     # E
@@ -435,7 +416,6 @@ def test_piece_captured():
         other_side=pos.up(),
         player=PlayerRole.DEFENDER,
         board=empty,
-        king_pos=Position(0, 0),
     )
 
     # ODA (O = occupied throne)
@@ -450,7 +430,6 @@ def test_piece_captured():
         other_side=pos.left(),
         player=PlayerRole.ATTACKER,
         board=empty,
-        king_pos=Position(3, 3),
     )
 
     # OAD (O = occupied throne)
@@ -465,7 +444,6 @@ def test_piece_captured():
         other_side=pos.left(),
         player=PlayerRole.DEFENDER,
         board=empty,
-        king_pos=Position(3, 3),
     )
 
     # O
@@ -482,7 +460,6 @@ def test_piece_captured():
         other_side=pos.up(),
         player=PlayerRole.ATTACKER,
         board=empty,
-        king_pos=Position(3, 3),
     )
 
     # O
@@ -499,7 +476,6 @@ def test_piece_captured():
         other_side=pos.up(),
         player=PlayerRole.DEFENDER,
         board=empty,
-        king_pos=Position(3, 3),
     )
 
     # AKA
@@ -514,7 +490,6 @@ def test_piece_captured():
         other_side=pos.right(),
         player=PlayerRole.ATTACKER,
         board=empty,
-        king_pos=Position(3, 3),
     )
 
     # A
@@ -531,7 +506,6 @@ def test_piece_captured():
         other_side=pos.down(),
         player=PlayerRole.ATTACKER,
         board=empty,
-        king_pos=Position(3, 3),
     )
 
     # DKD
@@ -546,7 +520,6 @@ def test_piece_captured():
         other_side=pos.right(),
         player=PlayerRole.DEFENDER,
         board=empty,
-        king_pos=Position(3, 3),
     )
 
     # D
@@ -563,7 +536,6 @@ def test_piece_captured():
         other_side=pos.down(),
         player=PlayerRole.DEFENDER,
         board=empty,
-        king_pos=Position(3, 3),
     )
 
 
@@ -580,8 +552,7 @@ def test_king_is_captured():
     Position(y=3, x=4).set_square(board=middle_captured, piece=PieceType.ATTACKER)
     Position(y=4, x=3).set_square(board=middle_captured, piece=PieceType.ATTACKER)
     assert Hnefatafl.king_is_captured(
-        Position(3, 3),
-        middle_captured,
+        board=middle_captured,
         new_pos=Position(3, 2),
         player=PlayerRole.ATTACKER,
     )
@@ -589,8 +560,7 @@ def test_king_is_captured():
     # king is on throne, but not fully surrounded by attackers
     Position(y=4, x=3).set_square(board=middle_captured, piece=None)
     assert not Hnefatafl.king_is_captured(
-        Position(3, 3),
-        middle_captured,
+        board=middle_captured,
         new_pos=Position(3, 2),
         player=PlayerRole.ATTACKER,
     )
@@ -603,7 +573,6 @@ def test_king_is_captured():
     king_pos.left().set_square(board=next_to_throne_captured, piece=PieceType.ATTACKER)
     king_pos.right().set_square(board=next_to_throne_captured, piece=PieceType.ATTACKER)
     assert Hnefatafl.king_is_captured(
-        king_pos=king_pos,
         board=next_to_throne_captured,
         new_pos=king_pos.up(),
         player=PlayerRole.ATTACKER,
@@ -617,7 +586,6 @@ def test_king_is_captured():
     king_pos.left().set_square(board=random_captured, piece=PieceType.ATTACKER)
     king_pos.right().set_square(board=random_captured, piece=PieceType.ATTACKER)
     assert Hnefatafl.king_is_captured(
-        king_pos=king_pos,
         board=random_captured,
         new_pos=king_pos.left(),
         player=PlayerRole.ATTACKER,
@@ -632,7 +600,6 @@ def test_king_is_captured():
     king_pos.up().set_square(board=random_captured, piece=PieceType.ATTACKER)
     king_pos.down().set_square(board=random_captured, piece=PieceType.ATTACKER)
     assert Hnefatafl.king_is_captured(
-        king_pos=king_pos,
         board=random_captured,
         new_pos=king_pos.up(),
         player=PlayerRole.ATTACKER,
@@ -644,7 +611,6 @@ def test_king_is_captured():
     king_pos.left().set_square(board=random_captured, piece=PieceType.DEFENDER)
     king_pos.right().set_square(board=random_captured, piece=PieceType.DEFENDER)
     assert not Hnefatafl.king_is_captured(
-        king_pos=king_pos,
         board=random_captured,
         new_pos=king_pos.left(),
         player=PlayerRole.DEFENDER,
@@ -656,7 +622,6 @@ def test_king_is_captured():
     king_pos.left().set_square(board=random_captured, piece=PieceType.DEFENDER)
     king_pos.right().set_square(board=random_captured, piece=PieceType.ATTACKER)
     assert not Hnefatafl.king_is_captured(
-        king_pos=king_pos,
         board=random_captured,
         new_pos=king_pos.right(),
         player=PlayerRole.ATTACKER,
@@ -680,3 +645,21 @@ def test_move_to_action():
     end_pos = Position(y=3, x=4)
     move = (start_pos, end_pos)
     assert hnefatafl.move_to_action(move) == 766
+
+
+def test_get_observation():
+    board = copy.deepcopy(default_board)
+    obs = Hnefatafl.get_observation(board=board)
+    assert len(obs.shape) == 3
+    attackers = Hnefatafl.get_attackers(board=board)
+    defenders = Hnefatafl.get_defenders(board=board)
+    king = Hnefatafl.get_king(board=board)
+    for i in range(Hnefatafl.DIMENSION):
+        for j in range(Hnefatafl.DIMENSION):
+            pos = Position(i, j)
+            if pos in attackers:
+                assert obs[0, i, j] == 1
+            if pos in defenders:
+                assert obs[1, i, j] == 1
+            if pos == king:
+                assert obs[2, i, j] == 1

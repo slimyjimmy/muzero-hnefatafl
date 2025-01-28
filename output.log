@@ -1,0 +1,16 @@
+
+Welcome to MuZero! Here's a list of games:
+0. __init__
+1. atari
+2. breakout
+3. cartpole
+4. connect4
+5. gomoku
+6. gridworld
+7. hnefatafl_game
+8. lunarlander
+9. simple_grid
+10. spiel
+11. tictactoe
+12. twentyone
+Enter a number to choose the game: 

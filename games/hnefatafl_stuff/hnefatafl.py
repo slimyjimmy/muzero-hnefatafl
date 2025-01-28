@@ -12,6 +12,8 @@ from games.hnefatafl_stuff.player_role import PlayerRole
 from games.hnefatafl_stuff.position import Position
 from games.hnefatafl_stuff.types import Board, Move
 
+debug = False
+
 
 class Hnefatafl:
     DIMENSION = 7
@@ -137,9 +139,10 @@ class Hnefatafl:
     def reset(self):
         self.board = copy.deepcopy(Hnefatafl.DEFAULT_BOARD)
         self.player = PlayerRole.ATTACKER
-        return self.get_observation()
+        return Hnefatafl.get_observation(self.board)
 
-    def get_observation(self):
+    @classmethod
+    def get_observation(cls, board: Board) -> numpy.ndarray:
         """
         Returns the current observation.
         """
@@ -147,11 +150,11 @@ class Hnefatafl:
         for i in range(Hnefatafl.DIMENSION):
             for j in range(Hnefatafl.DIMENSION):
                 pos = Position(i, j)
-                if pos.get_square(self.board) == PieceType.ATTACKER:
+                if pos.get_square(board) == PieceType.ATTACKER:
                     observation[0, i, j] = 1
-                elif pos.get_square(self.board) == PieceType.DEFENDER:
+                elif pos.get_square(board) == PieceType.DEFENDER:
                     observation[1, i, j] = 1
-                elif pos.get_square(self.board) == PieceType.KING:
+                elif pos.get_square(board) == PieceType.KING:
                     observation[2, i, j] = 1
         return observation
 
@@ -538,7 +541,7 @@ class Hnefatafl:
             board,
         )
 
-    def step(self, action):
+    def step(self, action) -> Tuple[numpy.ndarray, int, bool]:
         # check if action is legal
         move = self.action_to_move(action)
 
@@ -549,10 +552,14 @@ class Hnefatafl:
             attackers=Hnefatafl.get_attackers(board=self.board),
         )
         self.board = updated_board
+        if debug:
+            print(Hnefatafl.get_rendering_string(updated_board))
+        if done:
+            print("Game finished")
 
         self.current_player = self.current_player.toggle()
 
-        return self.get_observation(), reward, done
+        return Hnefatafl.get_observation(board=self.board), reward, done
 
     @classmethod
     def is_opponent(

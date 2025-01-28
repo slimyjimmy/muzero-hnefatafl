@@ -132,17 +132,17 @@ class MuZeroConfig:
                 if start_pos in Hnefatafl.CORNERS:
                     continue
 
-                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:  
+                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                     for distance in range(1, max_distance + 1):
                         x1, y1 = x0 + dx * distance, y0 + dy * distance
 
                         # Encode like move_to_action
-                        action = (x0 * board_size + y0) * board_size**2 + (x1 * board_size + y1)
+                        action = (x0 * board_size + y0) * board_size**2 + (
+                            x1 * board_size + y1
+                        )
                         action_space.append(action)
 
         return action_space
-
-        #return list(range(Hnefatafl.DIMENSION**4))
 
 
 class Game(AbstractGame):
@@ -186,10 +186,12 @@ class Game(AbstractGame):
         Returns:
             An array of integers, subset of the action space.
         """
-        possible_moves = self.env.get_possible_moves(self.env.board, self.env.current_player)
+        possible_moves = self.env.get_possible_moves(
+            self.env.board, self.env.current_player
+        )
         legal_actions = [self.env.move_to_action(move) for move in possible_moves]
         return legal_actions
-        #return MuZeroConfig.get_action_space()  # Hnefatafl is too complex
+        # return MuZeroConfig.get_action_space()  # Hnefatafl is too complex
 
     def reset(self):
         """
