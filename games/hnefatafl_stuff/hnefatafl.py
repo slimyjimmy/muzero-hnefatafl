@@ -436,7 +436,6 @@ class Hnefatafl:
                     ),
                     player=player,
                     board=board,
-                    king_pos=king_pos,
                     capture_king=True,
                 ):
                     return True
