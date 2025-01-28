@@ -307,6 +307,7 @@ class MCTS:
 
             root.expand(
                 legal_action_indices,
+                self.config.action_space,
                 to_play,
                 reward,
                 policy_logits,
@@ -352,8 +353,10 @@ class MCTS:
             # Map action space to indices
             action_indices = list(range(len(self.config.action_space)))  # Indices from 0 to len(action_space) - 1
 
+
             node.expand(
                 action_indices,
+                self.config.action_space,
                 virtual_to_play,
                 reward,
                 policy_logits,
@@ -458,7 +461,7 @@ class Node:
             return 0
         return self.value_sum / self.visit_count
 
-    def expand(self, actions, to_play, reward, policy_logits, hidden_state):
+    def expand(self, actions, action_space, to_play, reward, policy_logits, hidden_state):
         """
         We expand a node using the value, reward and policy prediction obtained from the
         neural network.
@@ -477,7 +480,7 @@ class Node:
         ).tolist()
 
         #map indicies back to the original action values
-        original_actions = [self.config.action_space[a] for a in actions]
+        original_actions = [action_space[a] for a in actions]
         policy = {original_actions[i]: policy_values[i] for i in range(len(actions))}
 
 
