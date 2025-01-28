@@ -190,8 +190,14 @@ class Game(AbstractGame):
             self.env.board, self.env.current_player
         )
         legal_actions = [self.env.move_to_action(move) for move in possible_moves]
+        if len(legal_actions) == 0:
+            # insert dummy move, because legal_actions must not be empty for some illogical reason
+            dummy_move = (
+                Position(1, 1),
+                Position(2, 1),
+            )
+            legal_actions = [self.env.move_to_action(dummy_move)]
         return legal_actions
-        # return MuZeroConfig.get_action_space()  # Hnefatafl is too complex
 
     def reset(self):
         """
