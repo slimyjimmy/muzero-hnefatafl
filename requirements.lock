@@ -214,8 +214,7 @@ threadpoolctl==3.0.0
     # via scikit-learn
 tomli==1.2.2
     # via setuptools-scm
-torch
-    # via -r requirements.in
+torch==2.1.2 -f https://download.pytorch.org/whl/cu118
 typing-extensions==4.0.0
     # via
     #   aiohttp
