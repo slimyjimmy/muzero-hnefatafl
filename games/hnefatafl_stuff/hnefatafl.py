@@ -268,11 +268,9 @@ class Hnefatafl:
 
         # The King Escapes
         if king_pos in Hnefatafl.CORNERS:
-            print("king escaped")
             return GameResult.WIN, PlayerRole.DEFENDER
         # The King is Captured
         if king_captured:
-            print("king captured")
             return GameResult.WIN, PlayerRole.ATTACKER
         # No Legal Moves -> handled in my_step
         """if len(Hnefatafl.get_possible_moves(board=board, player=player)) == 0:
@@ -280,7 +278,6 @@ class Hnefatafl:
             return GameResult.DRAW, None"""
         # All Attackers Are Eliminated
         if len(attackers) == 0:
-            print("all attackers eleminated")
             return GameResult.WIN, PlayerRole.DEFENDER
         return GameResult.ONGOING, None
 
@@ -552,8 +549,8 @@ class Hnefatafl:
         self.board = updated_board
         if debug:
             print(Hnefatafl.get_rendering_string(updated_board))
-        if done:
-            print("Game finished")
+            if done:
+                print("Game finished")
 
         self.current_player = self.current_player.toggle()
 
