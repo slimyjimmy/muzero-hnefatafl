@@ -1,3 +1,6 @@
+# results directory of muzero
+results/
+
 # Editors
 .vscode/
 .idea/
