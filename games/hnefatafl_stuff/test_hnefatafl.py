@@ -673,3 +673,52 @@ def test_get_board_from_observation():
             assert pos.get_square(board=og_board) == pos.get_square(
                 board=board_from_obs
             )
+
+
+# Rules from https://aagenielsen.dk/copenhagen_rules.php
+def test_1():
+    pass
+
+
+def test_2():
+    pass
+
+
+def test_3():
+    pass
+
+
+def test_4a():
+    pass
+
+
+def test_4b():
+    pass
+
+
+def test_5():
+    pass
+
+
+def test_6a():
+    pass
+
+
+def test_7a():
+    pass
+
+
+def test_7b():
+    pass
+
+
+def test_8():
+    pass
+
+
+def test_9():
+    pass
+
+
+def test_10():
+    pass

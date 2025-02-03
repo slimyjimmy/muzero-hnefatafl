@@ -6,6 +6,15 @@ from games.hnefatafl_stuff.position import Position
 from games.hnefatafl_stuff.types import default_board
 
 
+def test_hash():
+    p1 = Position(x=1, y=2)
+    p2 = Position(x=1, y=2)
+    assert hash(p1) == hash(p2)
+    p1 = Position(x=1, y=2)
+    p2 = Position(x=2, y=3)
+    assert hash(p1) != hash(p2)
+
+
 def test_eq():
     pos1 = Position(x=1, y=2)
     pos1b = Position(x=1, y=2)
@@ -41,6 +50,8 @@ def test_left():
 def test_get_square():
     board = copy.deepcopy(default_board)
     assert Hnefatafl.MIDDLE.get_square(board=board) == PieceType.KING
+    invalid_pos = Position(x=Position.INVALID, y=1)
+    assert invalid_pos.get_square(board=board) == None
 
 
 def test_set_square():
@@ -70,7 +81,21 @@ def test_is_within_board():
     assert not Position(y=2, x=8).is_within_board()
 
 
+def test_to_list():
+    pos = Position(x=1, y=2)
+    list = pos.to_list()
+    assert len(list) == 2 and list[0] == 1 and list[1] == 2
+
+
+def test_to_string():
+    pos = Position(x=1, y=2)
+    assert pos.to_string() == "(B5)"
+
+
 def test_is_open_to_piece():
+    # no piece given
+    assert not Position(x=1, y=2).is_open_to_piece(piece=None)
+
     # not in field
     assert not Position(x=7, y=7).is_open_to_piece(piece=PieceType.ATTACKER)
 
@@ -97,6 +122,8 @@ def test_is_open_to_piece():
 def test_get_adjacent_position():
     pos = Position(y=2, x=2)
 
+    assert pos.get_adjacent_position(direction=None) == None
+
     # down
     assert pos.get_adjacent_position(direction=Direction.DOWN) == pos.down(steps=1)
     assert pos.get_adjacent_position(direction=Direction.DOWN, steps=2) == pos.down(
@@ -119,6 +146,8 @@ def test_get_adjacent_position():
 
 def test_is_adjacent():
     pos = Position(x=2, y=2)
+
+    assert pos.is_adjacent(None) == None
 
     # down
     assert pos.is_adjacent(pos.down()) == Direction.DOWN
