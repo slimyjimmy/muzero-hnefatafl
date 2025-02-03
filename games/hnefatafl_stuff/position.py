@@ -1,18 +1,18 @@
-from typing import List, Optional
+from pydantic import BaseModel
+from typing import ClassVar, List, Optional
 from games.hnefatafl_stuff.direction import Direction
 from games.hnefatafl_stuff.piece_type import PieceType
 
 
-class Position:
+class Position(BaseModel):
     """
     Represents a zero-based position on the board.
     """
 
-    INVALID = -1
+    x: int
+    y: int
 
-    def __init__(self, x: int, y: int):
-        self.x = x
-        self.y = y
+    INVALID: ClassVar[int] = -1
 
     def get_adjacent_position(self, direction: Direction, steps: int = 1) -> "Position":
         if direction == Direction.UP:
@@ -50,16 +50,16 @@ class Position:
         return hash((self.x, self.y))
 
     def up(self, steps: int = 1) -> "Position":
-        return Position(self.x, self.y + steps)
+        return Position(x=self.x, y=self.y + steps)
 
     def left(self, steps: int = 1) -> "Position":
-        return Position(self.x - steps, self.y)
+        return Position(x=self.x - steps, y=self.y)
 
     def right(self, steps: int = 1) -> "Position":
-        return Position(self.x + steps, self.y)
+        return Position(x=self.x + steps, y=self.y)
 
     def down(self, steps: int = 1) -> "Position":
-        return Position(self.x, self.y - steps)
+        return Position(x=self.x, y=self.y - steps)
 
     def get_square(self, board: List[List[Optional[PieceType]]]) -> Optional[PieceType]:
         if self.x < 0 or self.x >= len(board) or self.y < 0 or self.y >= len(board):
@@ -100,3 +100,6 @@ class Position:
         from games.hnefatafl_stuff.hnefatafl import Hnefatafl
 
         return f"({chr(ord('A') + self.x)}{abs(self.y - Hnefatafl.DIMENSION)})"
+
+    def to_list(self) -> List[int]:
+        return [self.x, self.y]

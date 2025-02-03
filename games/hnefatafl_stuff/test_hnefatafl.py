@@ -100,9 +100,9 @@ def test_game_over():
     board = copy.deepcopy(default_board)
 
     # king reached corner square -> Defenders win
-    corner = Position(0, 0)
+    corner = Position(x=0, y=0)
     corner.set_square(board=board, piece=PieceType.KING)
-    Position(3, 3).set_square(board=board, piece=None)
+    Position(x=3, y=3).set_square(board=board, piece=None)
     res = Hnefatafl.game_over(
         board=board,
         attackers=[],
@@ -112,7 +112,7 @@ def test_game_over():
     # king was captured -> Attackers win
     corner.set_square(board=board, piece=None)
     res = Hnefatafl.game_over(
-        attackers=[Position(1, 1)],
+        attackers=[Position(x=1, y=1)],
         board=board,
     )
     assert res[0] == GameResult.WIN and res[1] == PlayerRole.ATTACKER
@@ -176,7 +176,7 @@ def test_is_opponent():
 def test_get_rendering_string():
     board = copy.deepcopy(default_board)
     res = Hnefatafl.get_rendering_string(board=board)
-    print(f"at (3,3) is: {Position(3,3).get_square(board=board)}")
+    print(f"at (3,3) is: {Position(x=3,y=3).get_square(board=board)}")
     assert (
         res
         == "  A   B   C   D   E   F   G\n+---+---+---+---+---+---+---+\n|   |   |   | 🗡️ |   |   |   | 7\n+---+---+---+---+---+---+---+\n|   |   |   | 🗡️ |   |   |   | 6\n+---+---+---+---+---+---+---+\n|   |   |   | 🛡️ |   |   |   | 5\n+---+---+---+---+---+---+---+\n| 🗡️ | 🗡️ | 🛡️ | K | 🛡️ | 🗡️ | 🗡️ | 4\n+---+---+---+---+---+---+---+\n|   |   |   | 🛡️ |   |   |   | 3\n+---+---+---+---+---+---+---+\n|   |   |   | 🗡️ |   |   |   | 2\n+---+---+---+---+---+---+---+\n|   |   |   | 🗡️ |   |   |   | 1\n+---+---+---+---+---+---+---+\n"
@@ -186,7 +186,7 @@ def test_get_rendering_string():
 def test_piece_captured():
     # DAD
     empty = copy.deepcopy(empty_board)
-    pos = Position(2, 1)
+    pos = Position(x=2, y=1)
     pos.set_square(board=empty, piece=PieceType.ATTACKER)
     pos.left().set_square(board=empty, piece=PieceType.DEFENDER)
     pos.right().set_square(board=empty, piece=PieceType.DEFENDER)
@@ -200,7 +200,7 @@ def test_piece_captured():
 
     # ADA
     empty = copy.deepcopy(empty_board)
-    pos = Position(2, 1)
+    pos = Position(x=2, y=1)
     pos.set_square(board=empty, piece=PieceType.DEFENDER)
     pos.left().set_square(board=empty, piece=PieceType.ATTACKER)
     pos.right().set_square(board=empty, piece=PieceType.ATTACKER)
@@ -214,7 +214,7 @@ def test_piece_captured():
 
     # KAD
     empty = copy.deepcopy(empty_board)
-    pos = Position(2, 1)
+    pos = Position(x=2, y=1)
     pos.set_square(board=empty, piece=PieceType.ATTACKER)
     pos.left().set_square(board=empty, piece=PieceType.KING)
     pos.right().set_square(board=empty, piece=PieceType.DEFENDER)
@@ -228,7 +228,7 @@ def test_piece_captured():
 
     # KDA
     empty = copy.deepcopy(empty_board)
-    pos = Position(2, 1)
+    pos = Position(x=2, y=1)
     pos.set_square(board=empty, piece=PieceType.DEFENDER)
     pos.left().set_square(board=empty, piece=PieceType.KING)
     pos.right().set_square(board=empty, piece=PieceType.ATTACKER)
@@ -244,7 +244,7 @@ def test_piece_captured():
     # A
     # D
     empty = copy.deepcopy(empty_board)
-    pos = Position(2, 1)
+    pos = Position(x=2, y=1)
     pos.set_square(board=empty, piece=PieceType.ATTACKER)
     pos.up().set_square(board=empty, piece=PieceType.DEFENDER)
     pos.down().set_square(board=empty, piece=PieceType.DEFENDER)
@@ -260,7 +260,7 @@ def test_piece_captured():
     # D
     # A
     empty = copy.deepcopy(empty_board)
-    pos = Position(2, 1)
+    pos = Position(x=2, y=1)
     pos.set_square(board=empty, piece=PieceType.DEFENDER)
     pos.up().set_square(board=empty, piece=PieceType.ATTACKER)
     pos.down().set_square(board=empty, piece=PieceType.ATTACKER)
@@ -276,7 +276,7 @@ def test_piece_captured():
     # D
     # A
     empty = copy.deepcopy(empty_board)
-    pos = Position(2, 1)
+    pos = Position(x=2, y=1)
     pos.set_square(board=empty, piece=PieceType.DEFENDER)
     pos.up().set_square(board=empty, piece=PieceType.KING)
     pos.down().set_square(board=empty, piece=PieceType.ATTACKER)
@@ -292,7 +292,7 @@ def test_piece_captured():
     # A
     # D
     empty = copy.deepcopy(empty_board)
-    pos = Position(2, 1)
+    pos = Position(x=2, y=1)
     pos.set_square(board=empty, piece=PieceType.ATTACKER)
     pos.up().set_square(board=empty, piece=PieceType.KING)
     pos.down().set_square(board=empty, piece=PieceType.DEFENDER)
@@ -418,7 +418,7 @@ def test_piece_captured():
 
     # ODA (O = occupied throne)
     empty = copy.deepcopy(empty_board)
-    Position(3, 3).set_square(board=empty, piece=PieceType.KING)
+    Position(x=3, y=3).set_square(board=empty, piece=PieceType.KING)
     pos = Position(y=3, x=4)
     pos.set_square(board=empty, piece=PieceType.DEFENDER)
     pos.right().set_square(board=empty, piece=PieceType.ATTACKER)
@@ -432,7 +432,7 @@ def test_piece_captured():
 
     # OAD (O = occupied throne)
     empty = copy.deepcopy(empty_board)
-    Position(3, 3).set_square(board=empty, piece=PieceType.KING)
+    Position(x=3, y=3).set_square(board=empty, piece=PieceType.KING)
     pos = Position(y=3, x=4)
     pos.set_square(board=empty, piece=PieceType.ATTACKER)
     pos.right().set_square(board=empty, piece=PieceType.DEFENDER)
@@ -448,7 +448,7 @@ def test_piece_captured():
     # D
     # A
     empty = copy.deepcopy(empty_board)
-    Position(3, 3).set_square(board=empty, piece=PieceType.KING)
+    Position(x=3, y=3).set_square(board=empty, piece=PieceType.KING)
     pos = Position(y=2, x=3)
     pos.set_square(board=empty, piece=PieceType.DEFENDER)
     pos.down().set_square(board=empty, piece=PieceType.ATTACKER)
@@ -464,7 +464,7 @@ def test_piece_captured():
     # A
     # D
     empty = copy.deepcopy(empty_board)
-    Position(3, 3).set_square(board=empty, piece=PieceType.KING)
+    Position(x=3, y=3).set_square(board=empty, piece=PieceType.KING)
     pos = Position(y=2, x=3)
     pos.set_square(board=empty, piece=PieceType.ATTACKER)
     pos.down().set_square(board=empty, piece=PieceType.DEFENDER)
@@ -478,7 +478,7 @@ def test_piece_captured():
 
     # AKA
     empty = copy.deepcopy(empty_board)
-    pos = Position(2, 1)
+    pos = Position(x=2, y=1)
     pos.set_square(board=empty, piece=PieceType.KING)
     pos.left().set_square(board=empty, piece=PieceType.ATTACKER)
     pos.right().set_square(board=empty, piece=PieceType.ATTACKER)
@@ -494,7 +494,7 @@ def test_piece_captured():
     # K
     # A
     empty = copy.deepcopy(empty_board)
-    pos = Position(2, 1)
+    pos = Position(x=2, y=1)
     pos.set_square(board=empty, piece=PieceType.KING)
     pos.up().set_square(board=empty, piece=PieceType.ATTACKER)
     pos.down().set_square(board=empty, piece=PieceType.ATTACKER)
@@ -508,7 +508,7 @@ def test_piece_captured():
 
     # DKD
     empty = copy.deepcopy(empty_board)
-    pos = Position(2, 1)
+    pos = Position(x=2, y=1)
     pos.set_square(board=empty, piece=PieceType.KING)
     pos.left().set_square(board=empty, piece=PieceType.DEFENDER)
     pos.right().set_square(board=empty, piece=PieceType.DEFENDER)
@@ -524,7 +524,7 @@ def test_piece_captured():
     # K
     # D
     empty = copy.deepcopy(empty_board)
-    pos = Position(2, 1)
+    pos = Position(x=2, y=1)
     pos.set_square(board=empty, piece=PieceType.KING)
     pos.up().set_square(board=empty, piece=PieceType.DEFENDER)
     pos.down().set_square(board=empty, piece=PieceType.DEFENDER)
@@ -551,7 +551,7 @@ def test_king_is_captured():
     Position(y=4, x=3).set_square(board=middle_captured, piece=PieceType.ATTACKER)
     assert Hnefatafl.king_is_captured(
         board=middle_captured,
-        new_pos=Position(3, 2),
+        new_pos=Position(x=3, y=2),
         player=PlayerRole.ATTACKER,
     )
 
@@ -559,7 +559,7 @@ def test_king_is_captured():
     Position(y=4, x=3).set_square(board=middle_captured, piece=None)
     assert not Hnefatafl.king_is_captured(
         board=middle_captured,
-        new_pos=Position(3, 2),
+        new_pos=Position(x=3, y=2),
         player=PlayerRole.ATTACKER,
     )
 
@@ -579,7 +579,7 @@ def test_king_is_captured():
     # king is on "random" square (not restricted, not throne, not next to throne) and captured
     # AKA
     random_captured = copy.deepcopy(empty_board)
-    king_pos = Position(2, 1)
+    king_pos = Position(x=2, y=1)
     king_pos.set_square(board=random_captured, piece=PieceType.KING)
     king_pos.left().set_square(board=random_captured, piece=PieceType.ATTACKER)
     king_pos.right().set_square(board=random_captured, piece=PieceType.ATTACKER)
@@ -593,7 +593,7 @@ def test_king_is_captured():
     # K
     # A
     random_captured = copy.deepcopy(empty_board)
-    king_pos = Position(2, 1)
+    king_pos = Position(x=2, y=1)
     king_pos.set_square(board=random_captured, piece=PieceType.KING)
     king_pos.up().set_square(board=random_captured, piece=PieceType.ATTACKER)
     king_pos.down().set_square(board=random_captured, piece=PieceType.ATTACKER)
@@ -604,7 +604,7 @@ def test_king_is_captured():
     )
     # DKD
     random_captured = copy.deepcopy(empty_board)
-    king_pos = Position(2, 1)
+    king_pos = Position(x=2, y=1)
     king_pos.set_square(board=random_captured, piece=PieceType.KING)
     king_pos.left().set_square(board=random_captured, piece=PieceType.DEFENDER)
     king_pos.right().set_square(board=random_captured, piece=PieceType.DEFENDER)
@@ -615,7 +615,7 @@ def test_king_is_captured():
     )
     # DKA
     random_captured = copy.deepcopy(empty_board)
-    king_pos = Position(2, 1)
+    king_pos = Position(x=2, y=1)
     king_pos.set_square(board=random_captured, piece=PieceType.KING)
     king_pos.left().set_square(board=random_captured, piece=PieceType.DEFENDER)
     king_pos.right().set_square(board=random_captured, piece=PieceType.ATTACKER)
@@ -654,10 +654,22 @@ def test_get_observation():
     king = Hnefatafl.get_king(board=board)
     for i in range(Hnefatafl.DIMENSION):
         for j in range(Hnefatafl.DIMENSION):
-            pos = Position(i, j)
+            pos = Position(x=i, y=j)
             if pos in attackers:
                 assert obs[0, i, j] == 1
             if pos in defenders:
                 assert obs[1, i, j] == 1
             if pos == king:
                 assert obs[2, i, j] == 1
+
+
+def test_get_board_from_observation():
+    og_board = copy.deepcopy(default_board)
+    observation = Hnefatafl.get_observation(board=og_board)
+    board_from_obs = Hnefatafl.get_board_from_observation(observation=observation)
+    for i in range(Hnefatafl.DIMENSION):
+        for j in range(Hnefatafl.DIMENSION):
+            pos = Position(x=i, y=j)
+            assert pos.get_square(board=og_board) == pos.get_square(
+                board=board_from_obs
+            )

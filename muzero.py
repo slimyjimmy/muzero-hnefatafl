@@ -14,6 +14,8 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 import diagnose_model
+from games.hnefatafl_stuff.api_client import APIClient
+from games.hnefatafl_stuff.player_role import PlayerRole
 import models
 import replay_buffer
 import self_play
@@ -38,6 +40,8 @@ class MuZero:
         >>> muzero.train()
         >>> muzero.test(render=True)
     """
+
+    OPPONENT_API = "api"
 
     def __init__(self, game_name, config=None, split_resources_in=1):
         # Load the game and the config from the module with the game name
@@ -376,7 +380,8 @@ class MuZero:
             render (bool): To display or not the environment. Defaults to True.
 
             opponent (str): "self" for self-play, "human" for playing against MuZero and "random"
-            for a random agent, None will use the opponent in the config. Defaults to None.
+            for a random agent, "MuZero.OPPONENT_API" for online-multiplayer.
+            None will use the opponent in the config. Defaults to None.
 
             muzero_player (int): Player number of MuZero in case of multiplayer
             games, None let MuZero play all players turn by turn, None will use muzero_player in
@@ -652,13 +657,14 @@ if __name__ == "__main__":
         while True:
             # Configure running options
             options = [
-                "Train",
-                "Load pretrained model",
-                "Diagnose model",
-                "Render some self play games",
-                "Play against MuZero",
-                "Test the game manually",
-                "Hyperparameter search",
+                "Train",  # 0
+                "Load pretrained model",  # 1
+                "Diagnose model",  # 2
+                "Render some self play games",  # 3
+                "Play against MuZero",  # 4
+                "Test the game manually",  # 5
+                "Hyperparameter search",  # 6
+                "Let MuZero play via API",  # 7
                 "Exit",
             ]
             print()
@@ -705,6 +711,29 @@ if __name__ == "__main__":
                     game_name, parametrization, budget, parallel_experiments, 20
                 )
                 muzero = MuZero(game_name, best_hyperparameters)
+            elif choice == 7:
+                # multiplayer game via API
+                if game_name != "hnefatafl_game":
+                    print("\nAPI only available for Hnefatafl")
+                else:
+                    game_id = input(
+                        "\nEnter id of game to join or just press enter to create new game"
+                    )
+
+                    APIClient().create_player(name="Robin & Djimon")
+                    if game_id == "":
+                        role = ""
+                        while role != "A" and role != "D":
+                            role = input(
+                                "\nWhat role do you want to play? Select [A,D]"
+                            )
+                        # create new game
+                        role = (
+                            PlayerRole.ATTACKER if role == "A" else PlayerRole.DEFENDER
+                        )
+                        game_id = APIClient().create_game(player_role=role)
+                    # join game
+                    APIClient().join_game(game_id=game_id)
             else:
                 break
             print("\nDone")

@@ -35,7 +35,7 @@ class MuZeroConfig:
         self.num_workers = 1  # Number of simultaneous threads/workers self-playing to feed the replay buffer
         self.selfplay_on_gpu = torch.cuda.is_available()
         self.max_moves = 300  # Maximum number of moves if game is not finished before
-        self.num_simulations = 25  # Number of future moves self-simulated
+        self.num_simulations = 800  # Number of future moves self-simulated
         self.discount = 1  # Chronological discount of the reward
         self.temperature_threshold = None  # Number of moves before dropping the temperature given by visit_softmax_temperature_fn to 0 (ie selecting the best action). If None, visit_softmax_temperature_fn is used every time
 
@@ -127,7 +127,7 @@ class MuZeroConfig:
 
         for x0 in range(board_size):
             for y0 in range(board_size):
-                start_pos = Position(x0, y0)
+                start_pos = Position(x=x0, y=y0)
 
                 if start_pos in Hnefatafl.CORNERS:
                     continue
@@ -193,8 +193,8 @@ class Game(AbstractGame):
         if len(legal_actions) == 0:
             # insert dummy move, because legal_actions must not be empty for some illogical reason
             dummy_move = (
-                Position(1, 1),
-                Position(2, 1),
+                Position(x=1, y=1),
+                Position(x=2, y=1),
             )
             legal_actions = [self.env.move_to_action(dummy_move)]
         return legal_actions
@@ -245,7 +245,8 @@ class Game(AbstractGame):
                     )
                 )
                 start_pos = Position(
-                    x=start_col, y=abs(start_row - Hnefatafl.DIMENSION)
+                    x=start_col,
+                    y=abs(start_row - Hnefatafl.DIMENSION),
                 )
 
                 print("Enter the end position of the piece you wish to move:")

@@ -2,8 +2,8 @@ from enum import Enum
 
 
 class PlayerRole(Enum):
-    DEFENDER = 1
-    ATTACKER = -1
+    DEFENDER = "Defender"
+    ATTACKER = "Attacker"
 
     def to_string(self) -> str:
         if self == PlayerRole.DEFENDER:
@@ -11,4 +11,6 @@ class PlayerRole(Enum):
         return "Attacker"
 
     def toggle(self):
-        return PlayerRole(self.value * -1)
+        if self == PlayerRole.DEFENDER:
+            return PlayerRole.ATTACKER
+        return PlayerRole.DEFENDER

@@ -27,11 +27,11 @@ class Hnefatafl:
     LOSS_REWARD = -100
 
     # Positions
-    MIDDLE = Position(3, 3)
-    UPPER_LEFT = Position(0, 0)
-    UPPER_RIGHT = Position(DIMENSION - 1, 0)
-    LOWER_LEFT = Position(0, DIMENSION - 1)
-    LOWER_RIGHT = Position(DIMENSION - 1, DIMENSION - 1)
+    MIDDLE = Position(x=3, y=3)
+    UPPER_LEFT = Position(x=0, y=0)
+    UPPER_RIGHT = Position(x=DIMENSION - 1, y=0)
+    LOWER_LEFT = Position(x=0, y=DIMENSION - 1)
+    LOWER_RIGHT = Position(x=DIMENSION - 1, y=DIMENSION - 1)
     CORNERS = [UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT]
     RESTRICTED_POSITIONS = [UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT, MIDDLE]
 
@@ -111,17 +111,17 @@ class Hnefatafl:
     def get_king(cls, board: Board) -> Position:
         for i in range(Hnefatafl.DIMENSION):
             for j in range(Hnefatafl.DIMENSION):
-                pos = Position(i, j)
+                pos = Position(x=i, y=j)
                 if pos.get_square(board=board) == PieceType.KING:
                     return pos
-        return Position(Position.INVALID, Position.INVALID)
+        return Position(x=Position.INVALID, y=Position.INVALID)
 
     @classmethod
     def get_attackers(cls, board: Board) -> List[Position]:
         attackers: List[Position] = []
         for i in range(Hnefatafl.DIMENSION):
             for j in range(Hnefatafl.DIMENSION):
-                pos = Position(i, j)
+                pos = Position(x=i, y=j)
                 if pos.get_square(board) == PieceType.ATTACKER:
                     attackers.append(pos)
         return attackers
@@ -131,7 +131,7 @@ class Hnefatafl:
         defenders: List[Position] = []
         for i in range(Hnefatafl.DIMENSION):
             for j in range(Hnefatafl.DIMENSION):
-                pos = Position(i, j)
+                pos = Position(x=i, y=j)
                 if pos.get_square(board) == PieceType.DEFENDER:
                     defenders.append(pos)
         return defenders
@@ -149,7 +149,7 @@ class Hnefatafl:
         observation = numpy.zeros((3, Hnefatafl.DIMENSION, Hnefatafl.DIMENSION))
         for i in range(Hnefatafl.DIMENSION):
             for j in range(Hnefatafl.DIMENSION):
-                pos = Position(i, j)
+                pos = Position(x=i, y=j)
                 if pos.get_square(board) == PieceType.ATTACKER:
                     observation[0, i, j] = 1
                 elif pos.get_square(board) == PieceType.DEFENDER:
@@ -157,6 +157,22 @@ class Hnefatafl:
                 elif pos.get_square(board) == PieceType.KING:
                     observation[2, i, j] = 1
         return observation
+
+    @classmethod
+    def get_board_from_observation(cls, observation: numpy.ndarray) -> Board:
+        board: Board = copy.deepcopy(Hnefatafl.DEFAULT_BOARD)
+        for i in range(Hnefatafl.DIMENSION):
+            for j in range(Hnefatafl.DIMENSION):
+                pos = Position(x=i, y=j)
+                piece = None
+                if observation[0, i, j] == 1:
+                    piece = PieceType.ATTACKER
+                elif observation[1, i, j] == 1:
+                    piece = PieceType.DEFENDER
+                elif observation[2, i, j] == 1:
+                    piece = PieceType.KING
+                pos.set_square(board=board, piece=piece)
+        return board
 
     def to_play(self):
         return 0 if self.player_role == 1 else 1
@@ -219,7 +235,7 @@ class Hnefatafl:
         moves: List[Move] = []  # start_pos, end_pos
         for i in range(Hnefatafl.DIMENSION):
             for j in range(Hnefatafl.DIMENSION):
-                pos: Position = Position(i, j)
+                pos: Position = Position(x=i, y=j)
                 if Hnefatafl.piece_belongs_to_player(
                     piece=pos.get_square(board), player=player
                 ):
@@ -298,7 +314,7 @@ class Hnefatafl:
         _from, _to = action // Hnefatafl.DIMENSION**2, action % Hnefatafl.DIMENSION**2
         x0, y0 = _from // Hnefatafl.DIMENSION, _from % Hnefatafl.DIMENSION
         x1, y1 = _to // Hnefatafl.DIMENSION, _to % Hnefatafl.DIMENSION
-        return (Position(x0, y0), Position(x1, y1))
+        return (Position(x=x0, y=y0), Position(x=x1, y=y1))
 
     @classmethod
     def piece_captured(
@@ -515,7 +531,7 @@ class Hnefatafl:
         ):
             king_pos = Hnefatafl.get_king(board=board)
             king_pos.set_square(board=board, piece=None)
-            king_pos = Position(Position.INVALID, Position.INVALID)
+            king_pos = Position(x=Position.INVALID, y=Position.INVALID)
             return True, reward, board
 
         # check if game is over

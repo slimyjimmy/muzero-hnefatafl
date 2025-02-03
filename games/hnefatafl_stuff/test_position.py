@@ -7,9 +7,9 @@ from games.hnefatafl_stuff.types import default_board
 
 
 def test_eq():
-    pos1 = Position(1, 2)
-    pos1b = Position(1, 2)
-    pos2 = Position(2, 2)
+    pos1 = Position(x=1, y=2)
+    pos1b = Position(x=1, y=2)
+    pos2 = Position(x=2, y=2)
     assert pos1 == pos1b
     assert not pos1 == pos2
 
@@ -72,21 +72,21 @@ def test_is_within_board():
 
 def test_is_open_to_piece():
     # not in field
-    assert not Position(7, 7).is_open_to_piece(piece=PieceType.ATTACKER)
+    assert not Position(x=7, y=7).is_open_to_piece(piece=PieceType.ATTACKER)
 
     # corner
-    assert not Position(0, 0).is_open_to_piece(piece=PieceType.ATTACKER)
-    assert not Position(6, 0).is_open_to_piece(piece=PieceType.ATTACKER)
-    assert not Position(0, 6).is_open_to_piece(piece=PieceType.ATTACKER)
-    assert not Position(6, 6).is_open_to_piece(piece=PieceType.ATTACKER)
-    assert not Position(0, 0).is_open_to_piece(piece=PieceType.DEFENDER)
-    assert not Position(6, 0).is_open_to_piece(piece=PieceType.DEFENDER)
-    assert not Position(0, 6).is_open_to_piece(piece=PieceType.DEFENDER)
-    assert not Position(6, 6).is_open_to_piece(piece=PieceType.DEFENDER)
-    assert Position(0, 0).is_open_to_piece(piece=PieceType.KING)
-    assert Position(6, 0).is_open_to_piece(piece=PieceType.KING)
-    assert Position(0, 6).is_open_to_piece(piece=PieceType.KING)
-    assert Position(6, 6).is_open_to_piece(piece=PieceType.KING)
+    assert not Position(x=0, y=0).is_open_to_piece(piece=PieceType.ATTACKER)
+    assert not Position(x=6, y=0).is_open_to_piece(piece=PieceType.ATTACKER)
+    assert not Position(x=0, y=6).is_open_to_piece(piece=PieceType.ATTACKER)
+    assert not Position(x=6, y=6).is_open_to_piece(piece=PieceType.ATTACKER)
+    assert not Position(x=0, y=0).is_open_to_piece(piece=PieceType.DEFENDER)
+    assert not Position(x=6, y=0).is_open_to_piece(piece=PieceType.DEFENDER)
+    assert not Position(x=0, y=6).is_open_to_piece(piece=PieceType.DEFENDER)
+    assert not Position(x=6, y=6).is_open_to_piece(piece=PieceType.DEFENDER)
+    assert Position(x=0, y=0).is_open_to_piece(piece=PieceType.KING)
+    assert Position(x=6, y=0).is_open_to_piece(piece=PieceType.KING)
+    assert Position(x=0, y=6).is_open_to_piece(piece=PieceType.KING)
+    assert Position(x=6, y=6).is_open_to_piece(piece=PieceType.KING)
 
     # throne
     assert not Hnefatafl.MIDDLE.is_open_to_piece(piece=PieceType.ATTACKER)
@@ -118,7 +118,7 @@ def test_get_adjacent_position():
 
 
 def test_is_adjacent():
-    pos = Position(2, 2)
+    pos = Position(x=2, y=2)
 
     # down
     assert pos.is_adjacent(pos.down()) == Direction.DOWN
