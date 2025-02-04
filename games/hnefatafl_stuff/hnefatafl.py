@@ -104,8 +104,7 @@ class Hnefatafl:
     def __init__(self, role=PlayerRole.ATTACKER):
         default_board = copy.deepcopy(Hnefatafl.DEFAULT_BOARD)
         self.board = copy.deepcopy(default_board)
-        self.player_role = role
-        self.current_player = PlayerRole.ATTACKER
+        self.current_player = role
 
     @classmethod
     def get_king(cls, board: Board) -> Position:
@@ -138,7 +137,7 @@ class Hnefatafl:
 
     def reset(self):
         self.board = copy.deepcopy(Hnefatafl.DEFAULT_BOARD)
-        self.player = PlayerRole.ATTACKER
+        self.current_player = PlayerRole.ATTACKER
         return Hnefatafl.get_observation(self.board)
 
     @classmethod
@@ -175,7 +174,7 @@ class Hnefatafl:
         return board
 
     def to_play(self):
-        return 0 if self.player_role == 1 else 1
+        return 0 if self.current_player == PlayerRole.ATTACKER else 1
 
     @classmethod
     def get_possible_dests_from_pos(
@@ -195,35 +194,35 @@ class Hnefatafl:
         ):
             # move left
             k = 1
-            while (
-                start_pos.left(k).is_open_to_piece(piece_to_move)
-                and start_pos.left(k).get_square(board) is None
-            ):
-                dests.append(start_pos.left(k))
+            while start_pos.left(k).is_within_board() and not start_pos.left(
+                k
+            ).is_occupied(board=board):
+                if start_pos.left(k).is_open_to_piece(piece_to_move):
+                    dests.append(start_pos.left(k))
                 k += 1
             # move right
             k = 1
-            while (
-                start_pos.right(k).is_open_to_piece(piece_to_move)
-                and start_pos.right(k).get_square(board) is None
-            ):
-                dests.append(start_pos.right(k))
+            while start_pos.right(k).is_within_board() and not start_pos.right(
+                k
+            ).is_occupied(board=board):
+                if start_pos.right(k).is_open_to_piece(piece_to_move):
+                    dests.append(start_pos.right(k))
                 k += 1
             # move up
             k = 1
-            while (
-                start_pos.up(k).is_open_to_piece(piece_to_move)
-                and start_pos.up(k).get_square(board) is None
+            while start_pos.up(k).is_within_board() and not start_pos.up(k).is_occupied(
+                board=board
             ):
-                dests.append(start_pos.up(k))
+                if start_pos.up(k).is_open_to_piece(piece_to_move):
+                    dests.append(start_pos.up(k))
                 k += 1
             # move down
             k = 1
-            while (
-                start_pos.down(k).is_open_to_piece(piece_to_move)
-                and start_pos.down(k).get_square(board) is None
-            ):
-                dests.append(start_pos.down(k))
+            while start_pos.down(k).is_within_board() and not start_pos.down(
+                k
+            ).is_occupied(board=board):
+                if start_pos.down(k).is_open_to_piece(piece_to_move):
+                    dests.append(start_pos.down(k))
                 k += 1
         return dests
 
@@ -269,6 +268,7 @@ class Hnefatafl:
         cls,
         board: Board,
         attackers: List[Position],
+        player: PlayerRole,
     ) -> Optional[Tuple[GameResult, PlayerRole]]:
         """
         Returns the game result along with the player if game was won.
@@ -289,9 +289,8 @@ class Hnefatafl:
         if king_captured:
             return GameResult.WIN, PlayerRole.ATTACKER
         # No Legal Moves -> handled in my_step
-        """if len(Hnefatafl.get_possible_moves(board=board, player=player)) == 0:
-            print("no legal moves left")
-            return GameResult.DRAW, None"""
+        if len(Hnefatafl.get_possible_moves(board=board, player=player)) == 0:
+            return GameResult.WIN, player.toggle()
         # All Attackers Are Eliminated
         if len(attackers) == 0:
             return GameResult.WIN, PlayerRole.DEFENDER
@@ -538,6 +537,7 @@ class Hnefatafl:
         game_result, result_player = Hnefatafl.game_over(
             board=board,
             attackers=attackers,
+            player=player,
         )
         done = game_result != GameResult.ONGOING
         if game_result == GameResult.WIN:

@@ -92,6 +92,12 @@ def test_to_string():
     assert pos.to_string() == "(B5)"
 
 
+def test_is_occupied():
+    default_board = copy.deepcopy(Hnefatafl.DEFAULT_BOARD)
+    assert Position(x=3, y=3).is_occupied(board=default_board)
+    assert not Position(x=1, y=6).is_occupied(board=default_board)
+
+
 def test_is_open_to_piece():
     # no piece given
     assert not Position(x=1, y=2).is_open_to_piece(piece=None)

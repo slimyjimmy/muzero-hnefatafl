@@ -1,7 +1,10 @@
 from pydantic import BaseModel
-from typing import ClassVar, List, Optional
+from typing import TYPE_CHECKING, ClassVar, List, Optional
 from games.hnefatafl_stuff.direction import Direction
 from games.hnefatafl_stuff.piece_type import PieceType
+
+if TYPE_CHECKING:
+    from games.hnefatafl_stuff.types import Board
 
 
 class Position(BaseModel):
@@ -61,13 +64,17 @@ class Position(BaseModel):
     def down(self, steps: int = 1) -> "Position":
         return Position(x=self.x, y=self.y - steps)
 
-    def get_square(self, board: List[List[Optional[PieceType]]]) -> Optional[PieceType]:
+    def get_square(self, board: "Board") -> Optional[PieceType]:
+        from games.hnefatafl_stuff.types import Board
+
         if self.x < 0 or self.x >= len(board) or self.y < 0 or self.y >= len(board):
             return None
         return board[self.y][self.x]
 
     def set_square(
-        self, board: List[List[Optional[PieceType]]], piece: Optional[PieceType]
+        self,
+        board: "Board",
+        piece: Optional[PieceType],
     ) -> None:
         board[self.y][self.x] = piece
 
@@ -76,6 +83,13 @@ class Position(BaseModel):
         from games.hnefatafl_stuff.hnefatafl import Hnefatafl
 
         return 0 <= self.x < Hnefatafl.DIMENSION and 0 <= self.y < Hnefatafl.DIMENSION
+
+    def is_occupied(self, board: "Board") -> bool:
+        if not self.is_within_board():
+            return False
+        assert board is not None
+
+        return self.get_square(board=board) != None
 
     def is_open_to_piece(self, piece: PieceType) -> bool:
         """

@@ -106,6 +106,7 @@ def test_game_over():
     res = Hnefatafl.game_over(
         board=board,
         attackers=[],
+        player=PlayerRole.ATTACKER,
     )
     assert res[0] == GameResult.WIN and res[1] == PlayerRole.DEFENDER
 
@@ -114,6 +115,7 @@ def test_game_over():
     res = Hnefatafl.game_over(
         attackers=[Position(x=1, y=1)],
         board=board,
+        player=PlayerRole.ATTACKER,
     )
     assert res[0] == GameResult.WIN and res[1] == PlayerRole.ATTACKER
 
@@ -677,48 +679,267 @@ def test_get_board_from_observation():
 
 # Rules from https://aagenielsen.dk/copenhagen_rules.php
 def test_1():
-    pass
+    board = copy.deepcopy(Hnefatafl.DEFAULT_BOARD)
+    # there are twice as many attackers as defenders
+    attackers = Hnefatafl.get_attackers(board=board)
+    defenders = Hnefatafl.get_defenders(board=board)
+    assert len(attackers) == 2 * len(defenders)
 
 
 def test_2():
-    pass
+    # it's attacker's turn first
+    hnef = Hnefatafl()
+    assert hnef.current_player == PlayerRole.ATTACKER
 
 
 def test_3():
-    pass
+    middle = Position(x=3, y=3)
+
+    # test attacker
+    board = copy.deepcopy(empty_board)
+    pos = middle.left()
+    pos.set_square(board=board, piece=PieceType.ATTACKER)
+    print(Hnefatafl.get_rendering_string(board=board))
+    possible_dests = Hnefatafl.get_possible_dests_from_pos(
+        board=board, player=PlayerRole.ATTACKER, start_pos=pos
+    )
+    assert len(possible_dests) == 5 + 6
+    for possible_dest in possible_dests:
+        assert (
+            possible_dest.x == pos.x or possible_dest.y == pos.y
+        ), possible_dest.to_string()
+
+    # test defender
+    board = copy.deepcopy(empty_board)
+    pos = middle.left()
+    pos.set_square(board=board, piece=PieceType.DEFENDER)
+    possible_dests = Hnefatafl.get_possible_dests_from_pos(
+        board=board, player=PlayerRole.DEFENDER, start_pos=pos
+    )
+    assert len(possible_dests) == 5 + 6
+    for possible_dest in possible_dests:
+        assert (
+            possible_dest.x == pos.x or possible_dest.y == pos.y
+        ), possible_dest.to_string()
+
+    # test king
+    board = copy.deepcopy(empty_board)
+    middle.set_square(board=board, piece=PieceType.KING)
+    possible_dests = Hnefatafl.get_possible_dests_from_pos(
+        board=board, player=PlayerRole.DEFENDER, start_pos=middle
+    )
+    assert len(possible_dests) == 6 + 6
+    for possible_dest in possible_dests:
+        assert (
+            possible_dest.x == middle.x or possible_dest.y == middle.y
+        ), possible_dest.to_string()
 
 
 def test_4a():
-    pass
+    # pic 1 (see https://isis.tu-berlin.de/mod/forum/discuss.php?d=634272)
+    board = copy.deepcopy(empty_board)
+    Position(x=0, y=1).set_square(board=board, piece=PieceType.ATTACKER)
+    Position(x=2, y=3).set_square(board=board, piece=PieceType.ATTACKER)
+    Position(x=4, y=1).set_square(board=board, piece=PieceType.ATTACKER)
+    Position(x=1, y=1).set_square(board=board, piece=PieceType.DEFENDER)
+    Position(x=2, y=2).set_square(board=board, piece=PieceType.DEFENDER)
+    Position(x=3, y=1).set_square(board=board, piece=PieceType.DEFENDER)
+    new_pos = Position(x=2, y=1)
+    new_pos.set_square(board=board, piece=PieceType.ATTACKER)
+    assert Hnefatafl.piece_captured(
+        new_pos=new_pos,
+        maybe_captured=new_pos.left(),
+        other_side=new_pos.left(2),
+        player=PlayerRole.ATTACKER,
+        board=board,
+    )
+    assert Hnefatafl.piece_captured(
+        new_pos=new_pos,
+        maybe_captured=new_pos.right(),
+        other_side=new_pos.right(2),
+        player=PlayerRole.ATTACKER,
+        board=board,
+    )
+    assert Hnefatafl.piece_captured(
+        new_pos=new_pos,
+        maybe_captured=new_pos.up(),
+        other_side=new_pos.up(2),
+        player=PlayerRole.ATTACKER,
+        board=board,
+    )
+
+    # pic 2 (see https://isis.tu-berlin.de/mod/forum/discuss.php?d=634272)
+    board = copy.deepcopy(empty_board)
+    middle = Position(x=3, y=3)
+    middle.down().set_square(board=board, piece=PieceType.DEFENDER)
+    middle.down(2).set_square(board=board, piece=PieceType.ATTACKER)
+    assert Hnefatafl.piece_captured(
+        new_pos=middle.down(2),
+        maybe_captured=middle.down(),
+        other_side=middle,
+        player=PlayerRole.ATTACKER,
+        board=board,
+    )
+
+    # pic 3 (see https://isis.tu-berlin.de/mod/forum/discuss.php?d=634272)
+    board = copy.deepcopy(empty_board)
+    white_pos = Position(x=2, y=1)
+    white_pos.set_square(board=board, piece=PieceType.DEFENDER)
+    white_pos.up().set_square(board=board, piece=PieceType.ATTACKER)
+    white_pos.up(2).set_square(board=board, piece=PieceType.KING)
+    assert Hnefatafl.piece_captured(
+        new_pos=white_pos.up(2),
+        maybe_captured=white_pos.up(),
+        other_side=white_pos,
+        player=PlayerRole.DEFENDER,
+        board=board,
+    )
+
+    # pic 4 (see https://isis.tu-berlin.de/mod/forum/discuss.php?d=634272)
+    board = copy.deepcopy(empty_board)
+    middle = Position(x=3, y=3)
+    middle.set_square(board=board, piece=PieceType.KING)
+    middle.down().set_square(board=board, piece=PieceType.ATTACKER)
+    middle.down(2).set_square(board=board, piece=PieceType.DEFENDER)
+    assert Hnefatafl.piece_captured(
+        new_pos=middle.down(2),
+        maybe_captured=middle.down(),
+        other_side=middle,
+        player=PlayerRole.DEFENDER,
+        board=board,
+    )
+
+    # pic 5 (see https://isis.tu-berlin.de/mod/forum/discuss.php?d=634272)
+    board = copy.deepcopy(empty_board)
+    white_pos = Position(x=1, y=6)
+    white_pos.set_square(board=board, piece=PieceType.DEFENDER)
+    white_pos.right().set_square(board=board, piece=PieceType.ATTACKER)
+    assert Hnefatafl.piece_captured(
+        new_pos=white_pos.right(),
+        maybe_captured=white_pos,
+        other_side=white_pos.left(),
+        player=PlayerRole.ATTACKER,
+        board=board,
+    )
+
+    # pic 6 (see https://isis.tu-berlin.de/mod/forum/discuss.php?d=634272)
+    board = copy.deepcopy(empty_board)
+    middle = Position(x=3, y=3)
+    middle.set_square(board=board, piece=PieceType.KING)
+    middle.down().set_square(board=board, piece=PieceType.DEFENDER)
+    middle.down(2).set_square(board=board, piece=PieceType.ATTACKER)
+    assert not Hnefatafl.piece_captured(
+        new_pos=middle.down(2),
+        maybe_captured=middle.down(),
+        other_side=middle,
+        player=PlayerRole.ATTACKER,
+        board=board,
+    )
+
+    # pic 7 (see https://isis.tu-berlin.de/mod/forum/discuss.php?d=634272)
+    assert True
 
 
 def test_4b():
+    # we don't use this rule (see https://isis.tu-berlin.de/mod/forum/discuss.php?d=634272)
     pass
 
 
 def test_5():
-    pass
+    for corner in Hnefatafl.CORNERS:
+        assert not corner.is_open_to_piece(piece=PieceType.ATTACKER)
+        assert not corner.is_open_to_piece(piece=PieceType.DEFENDER)
+        assert corner.is_open_to_piece(piece=PieceType.KING)
+
+    assert not Hnefatafl.MIDDLE.is_open_to_piece(piece=PieceType.ATTACKER)
+    assert not Hnefatafl.MIDDLE.is_open_to_piece(piece=PieceType.DEFENDER)
+    assert Hnefatafl.MIDDLE.is_open_to_piece(piece=PieceType.KING)
 
 
 def test_6a():
+    for corner in Hnefatafl.CORNERS:
+        board = copy.deepcopy(empty_board)
+        corner.set_square(board=board, piece=PieceType.KING)
+        Position(x=1, y=1).set_square(board=board, piece=PieceType.ATTACKER)
+        res = Hnefatafl.game_over(
+            board=board,
+            attackers=[Position(x=1, y=1)],
+            player=PlayerRole.ATTACKER,
+        )
+        assert res[0] == GameResult.WIN and res[1] == PlayerRole.DEFENDER
+
+
+def test_6b():
+    # we don't use this rule (see https://isis.tu-berlin.de/mod/forum/discuss.php?d=634272)
     pass
 
 
 def test_7a():
-    pass
+    # explicit changes from Prof Koch:
+    # - If the king is not at or next to the throne, he can be captured like any other piece, with two enemies at the sides
+    # - The corner fields are hostile to all, including the King.
+
+    # pic 1 (see https://isis.tu-berlin.de/mod/forum/discuss.php?d=634272)
+    board = copy.deepcopy(empty_board)
+    Hnefatafl.MIDDLE.left().set_square(board=board, piece=PieceType.ATTACKER)
+    Hnefatafl.MIDDLE.right().set_square(board=board, piece=PieceType.ATTACKER)
+    Hnefatafl.MIDDLE.up().set_square(board=board, piece=PieceType.ATTACKER)
+    Hnefatafl.MIDDLE.down().set_square(board=board, piece=PieceType.ATTACKER)
+    res = Hnefatafl.game_over(
+        board=board,
+        attackers=Hnefatafl.get_attackers(board=board),
+        player=PlayerRole.ATTACKER,
+    )
+    assert res[0] == GameResult.WIN and res[1] == PlayerRole.ATTACKER
+
+    # pic 2 (see https://isis.tu-berlin.de/mod/forum/discuss.php?d=634272)
+    board = copy.deepcopy(empty_board)
+    king_pos = Hnefatafl.MIDDLE.down()
+    king_pos.left().set_square(board=board, piece=PieceType.ATTACKER)
+    king_pos.right().set_square(board=board, piece=PieceType.ATTACKER)
+    king_pos.down().set_square(board=board, piece=PieceType.ATTACKER)
+    res = Hnefatafl.game_over(
+        board=board,
+        attackers=Hnefatafl.get_attackers(board=board),
+        player=PlayerRole.ATTACKER,
+    )
+    assert res[0] == GameResult.WIN and res[1] == PlayerRole.ATTACKER
+
+    # pic 3 (see https://isis.tu-berlin.de/mod/forum/discuss.php?d=634272)
+    # -> not necessary due to explicit changes from Prof Koch (see above)
+
+    # pic 4 (see https://isis.tu-berlin.de/mod/forum/discuss.php?d=634272)
+    # -> not necessary due to explicit changes from Prof Koch (see above)
+
+    # pic 5 (see https://isis.tu-berlin.de/mod/forum/discuss.php?d=634272)
+    # -> not necessary due to explicit changes from Prof Koch (see above)
 
 
 def test_7b():
-    pass
+    # we don't use this rule (see https://isis.tu-berlin.de/mod/forum/discuss.php?d=634272)
+    assert True
 
 
 def test_8():
-    pass
+    assert True  # max_moves set in hnefatafl_game controls this
 
 
 def test_9():
-    pass
+    board = copy.deepcopy(empty_board)
+    lower_attacker = Position(x=0, y=1)
+    lower_attacker.set_square(board=board, piece=PieceType.ATTACKER)
+    lower_attacker.up().set_square(board=board, piece=PieceType.ATTACKER)
+    lower_attacker.up(2).set_square(board=board, piece=PieceType.DEFENDER)
+    lower_attacker.up().right().set_square(board=board, piece=PieceType.DEFENDER)
+    lower_attacker.right().set_square(board=board, piece=PieceType.DEFENDER)
+    Hnefatafl.MIDDLE.set_square(board=board, piece=PieceType.KING)
+    res = Hnefatafl.game_over(
+        board=board,
+        attackers=Hnefatafl.get_attackers(board=board),
+        player=PlayerRole.ATTACKER,
+    )
+    assert res[0] == GameResult.WIN and res[1] == PlayerRole.DEFENDER
 
 
 def test_10():
-    pass
+    assert True  # will lead to case 8
