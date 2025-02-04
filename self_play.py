@@ -1,13 +1,16 @@
 import copy
 import math
 import time
+from typing import List, Optional
 
 import numpy
 import ray
 import torch
 
 from games.hnefatafl_stuff.api_client import APIClient, GameState
+from games.hnefatafl_stuff.game_result import GameResult
 from games.hnefatafl_stuff.hnefatafl import Hnefatafl
+from games.hnefatafl_stuff.player_role import PlayerRole
 from games.hnefatafl_stuff.position import Position
 import models
 from games.hnefatafl_stuff.types import Board, Move
@@ -113,7 +116,12 @@ class SelfPlay:
         self.close_game()
 
     def play_game(
-        self, temperature, temperature_threshold, render, opponent, muzero_player
+        self,
+        temperature,
+        temperature_threshold,
+        render,
+        opponent,
+        muzero_player,
     ):
         """
         Play one game with actions based on the Monte Carlo tree search at each moves.
@@ -184,7 +192,7 @@ class SelfPlay:
                         opponent, stacked_observations
                     )
 
-                observation, reward, done = self.game.step(action)
+                observation, reward, done, game_result, player = self.game.step(action)
 
                 if render:
                     print(f"Played action: {self.game.action_to_string(action)}")
@@ -193,6 +201,8 @@ class SelfPlay:
                 game_history.store_search_statistics(root, self.config.action_space)
 
                 # Next batch
+                game_history.game_result_history.append(game_result)
+                game_history.player_history.append(player)
                 game_history.action_history.append(action)
                 game_history.observation_history.append(observation)
                 game_history.reward_history.append(reward)
@@ -558,7 +568,8 @@ class GameHistory:
     """
 
     def __init__(self):
-        self.result: int = 0  # 0=draw, 1=win, -1=loss
+        self.player_history: List[PlayerRole] = []
+        self.game_result_history: List[GameResult] = []
         self.observation_history = []
         self.action_history = []
         self.reward_history = []

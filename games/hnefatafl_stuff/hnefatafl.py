@@ -466,7 +466,9 @@ class Hnefatafl:
         bool,
         int,
         Board,
-    ]:  # done, reward, updated_board
+        GameResult,
+        Optional[PlayerRole],
+    ]:  # done, reward, updated_board, role of winner
         done = False
         reward = 0
 
@@ -478,6 +480,8 @@ class Hnefatafl:
                 True,
                 Hnefatafl.LOSS_REWARD,
                 board,
+                GameResult.WIN,
+                player.toggle(),
             )
 
         # check if move is legal
@@ -488,6 +492,8 @@ class Hnefatafl:
                 False,
                 Hnefatafl.INVALID_ACTION_REWARD,
                 board,
+                GameResult.ONGOING,
+                None,
             )
         if not end_pos in Hnefatafl.get_possible_dests_from_pos(
             start_pos=start_pos,
@@ -498,6 +504,8 @@ class Hnefatafl:
                 False,
                 Hnefatafl.INVALID_ACTION_REWARD,
                 board,
+                GameResult.ONGOING,
+                None,
             )
 
         # move piece from move[0] to move[1]
@@ -531,7 +539,13 @@ class Hnefatafl:
             king_pos = Hnefatafl.get_king(board=board)
             king_pos.set_square(board=board, piece=None)
             king_pos = Position(x=Position.INVALID, y=Position.INVALID)
-            return True, reward, board
+            return (
+                True,
+                reward,
+                board,
+                GameResult.WIN,
+                PlayerRole.ATTACKER,
+            )
 
         # check if game is over
         game_result, result_player = Hnefatafl.game_over(
@@ -550,13 +564,15 @@ class Hnefatafl:
             done,
             reward,
             board,
+            game_result,
+            result_player,
         )
 
-    def step(self, action) -> Tuple[numpy.ndarray, int, bool]:
+    def step(self, action) -> Tuple[numpy.ndarray, int, bool, int]:
         # check if action is legal
         move = self.action_to_move(action)
 
-        done, reward, updated_board = Hnefatafl.my_step(
+        done, reward, updated_board, game_result, player = Hnefatafl.my_step(
             board=self.board,
             move=move,
             player=self.current_player,
@@ -570,7 +586,13 @@ class Hnefatafl:
 
         self.current_player = self.current_player.toggle()
 
-        return Hnefatafl.get_observation(board=self.board), reward, done
+        return (
+            Hnefatafl.get_observation(board=self.board),
+            reward,
+            done,
+            game_result,
+            player,
+        )
 
     @classmethod
     def is_opponent(

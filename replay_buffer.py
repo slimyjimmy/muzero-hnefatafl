@@ -5,6 +5,8 @@ import numpy
 import ray
 import torch
 
+from games.hnefatafl_stuff.game_result import GameResult
+from games.hnefatafl_stuff.player_role import PlayerRole
 import models
 
 
@@ -54,13 +56,10 @@ class ReplayBuffer:
         self.buffer[self.num_played_games] = game_history
         self.num_played_games += 1
         # TODO_djimon: num_won_games
-        last_two_rewards = game_history.reward_history[-2:]
-        winner = -1
-        if self.reward_history[-1] > self.reward_history[-2]:
-            winner = game_history.to_play_history[-1]
-        else:
-            winner = game_history.to_play_history[-2]
-        if winner == 0:
+        if (
+            game_history.game_result_history[-1] == GameResult.WIN
+            and game_history.player_history[-1] == PlayerRole.ATTACKER
+        ):
             self.num_won_games += 1
         self.num_played_steps += len(game_history.root_values)
         self.total_samples += len(game_history.root_values)
