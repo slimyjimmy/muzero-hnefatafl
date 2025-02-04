@@ -4,5 +4,7 @@ numpy
 ray
 seaborn
 tensorboard
-torch==2.1.2 -f https://download.pytorch.org/whl/cu118
+torch; sys_platform == "darwin"
+torch==2.1.2 -f https://download.pytorch.org/whl/cu118; sys_platform == "linux"
 requests
+pydantic

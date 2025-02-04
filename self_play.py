@@ -120,6 +120,8 @@ class SelfPlay:
         """
         from muzero import MuZero
 
+        print(f"MuZero Player: {muzero_player}")
+
         game_history = GameHistory()
         observation = self.game.reset()
         game_history.action_history.append(0)
@@ -556,6 +558,7 @@ class GameHistory:
     """
 
     def __init__(self):
+        self.result: int = 0  # 0=draw, 1=win, -1=loss
         self.observation_history = []
         self.action_history = []
         self.reward_history = []

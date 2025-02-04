@@ -115,6 +115,7 @@ class MuZero:
             "reward_loss": 0,
             "policy_loss": 0,
             "num_played_games": 0,
+            "num_won_games": 0,
             "num_played_steps": 0,
             "num_reanalysed_games": 0,
             "terminate": False,
@@ -264,6 +265,7 @@ class MuZero:
             "reward_loss",
             "policy_loss",
             "num_played_games",
+            "num_won_games",
             "num_played_steps",
             "num_reanalysed_games",
         ]
@@ -321,11 +323,16 @@ class MuZero:
                 writer.add_scalar(
                     "3.Loss/1.Total_weighted_loss", info["total_loss"], counter
                 )
+                writer.add_scalar(
+                    "2.Workers/7.Self_played_games",
+                    info["num_won_games"],
+                    counter,
+                )
                 writer.add_scalar("3.Loss/Value_loss", info["value_loss"], counter)
                 writer.add_scalar("3.Loss/Reward_loss", info["reward_loss"], counter)
                 writer.add_scalar("3.Loss/Policy_loss", info["policy_loss"], counter)
                 print(
-                    f'Last test reward: {info["total_reward"]:.2f}. Training step: {info["training_step"]}/{self.config.training_steps}. Played games: {info["num_played_games"]}. Loss: {info["total_loss"]:.2f}',
+                    f'Last test reward: {info["total_reward"]:.2f}. Training step: {info["training_step"]}/{self.config.training_steps}. Played games: {info["num_played_games"]}. Won games: {info["num_won_games"]}. Loss: {info["total_loss"]:.2f}',
                     end="\r",
                 )
                 counter += 1
@@ -343,6 +350,7 @@ class MuZero:
                 {
                     "buffer": self.replay_buffer,
                     "num_played_games": self.checkpoint["num_played_games"],
+                    "num_won_games": self.checkpoint["num_won_games"],
                     "num_played_steps": self.checkpoint["num_played_steps"],
                     "num_reanalysed_games": self.checkpoint["num_reanalysed_games"],
                 },
@@ -455,6 +463,7 @@ class MuZero:
             self.checkpoint["num_played_games"] = replay_buffer_infos[
                 "num_played_games"
             ]
+            self.checkpoint["num_won_games"] = replay_buffer_infos["num_won_games"]
             self.checkpoint["num_reanalysed_games"] = replay_buffer_infos[
                 "num_reanalysed_games"
             ]
@@ -466,6 +475,7 @@ class MuZero:
             self.checkpoint["training_step"] = 0
             self.checkpoint["num_played_steps"] = 0
             self.checkpoint["num_played_games"] = 0
+            self.checkpoint["num_won_games"] = 0
             self.checkpoint["num_reanalysed_games"] = 0
 
     def diagnose_model(self, horizon):
