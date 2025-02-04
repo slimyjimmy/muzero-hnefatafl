@@ -14,6 +14,8 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 import diagnose_model
+from games.hnefatafl_stuff.api_client import APIClient
+from games.hnefatafl_stuff.player_role import PlayerRole
 import models
 import replay_buffer
 import self_play
@@ -38,6 +40,8 @@ class MuZero:
         >>> muzero.train()
         >>> muzero.test(render=True)
     """
+
+    OPPONENT_API = "api"
 
     def __init__(self, game_name, config=None, split_resources_in=1):
         # Load the game and the config from the module with the game name
@@ -111,6 +115,7 @@ class MuZero:
             "reward_loss": 0,
             "policy_loss": 0,
             "num_played_games": 0,
+            "num_won_games": 0,
             "num_played_steps": 0,
             "num_reanalysed_games": 0,
             "terminate": False,
@@ -260,6 +265,7 @@ class MuZero:
             "reward_loss",
             "policy_loss",
             "num_played_games",
+            "num_won_games",
             "num_played_steps",
             "num_reanalysed_games",
         ]
@@ -317,11 +323,16 @@ class MuZero:
                 writer.add_scalar(
                     "3.Loss/1.Total_weighted_loss", info["total_loss"], counter
                 )
+                writer.add_scalar(
+                    "2.Workers/7.Self_played_games",
+                    info["num_won_games"],
+                    counter,
+                )
                 writer.add_scalar("3.Loss/Value_loss", info["value_loss"], counter)
                 writer.add_scalar("3.Loss/Reward_loss", info["reward_loss"], counter)
                 writer.add_scalar("3.Loss/Policy_loss", info["policy_loss"], counter)
                 print(
-                    f'Last test reward: {info["total_reward"]:.2f}. Training step: {info["training_step"]}/{self.config.training_steps}. Played games: {info["num_played_games"]}. Loss: {info["total_loss"]:.2f}',
+                    f'Last test reward: {info["total_reward"]:.2f}. Training step: {info["training_step"]}/{self.config.training_steps}. Played games: {info["num_played_games"]}. Won games: {info["num_won_games"]}. Loss: {info["total_loss"]:.2f}',
                     end="\r",
                 )
                 counter += 1
@@ -339,6 +350,7 @@ class MuZero:
                 {
                     "buffer": self.replay_buffer,
                     "num_played_games": self.checkpoint["num_played_games"],
+                    "num_won_games": self.checkpoint["num_won_games"],
                     "num_played_steps": self.checkpoint["num_played_steps"],
                     "num_reanalysed_games": self.checkpoint["num_reanalysed_games"],
                 },
@@ -376,7 +388,8 @@ class MuZero:
             render (bool): To display or not the environment. Defaults to True.
 
             opponent (str): "self" for self-play, "human" for playing against MuZero and "random"
-            for a random agent, None will use the opponent in the config. Defaults to None.
+            for a random agent, "MuZero.OPPONENT_API" for online-multiplayer.
+            None will use the opponent in the config. Defaults to None.
 
             muzero_player (int): Player number of MuZero in case of multiplayer
             games, None let MuZero play all players turn by turn, None will use muzero_player in
@@ -450,6 +463,7 @@ class MuZero:
             self.checkpoint["num_played_games"] = replay_buffer_infos[
                 "num_played_games"
             ]
+            self.checkpoint["num_won_games"] = replay_buffer_infos["num_won_games"]
             self.checkpoint["num_reanalysed_games"] = replay_buffer_infos[
                 "num_reanalysed_games"
             ]
@@ -461,6 +475,7 @@ class MuZero:
             self.checkpoint["training_step"] = 0
             self.checkpoint["num_played_steps"] = 0
             self.checkpoint["num_played_games"] = 0
+            self.checkpoint["num_won_games"] = 0
             self.checkpoint["num_reanalysed_games"] = 0
 
     def diagnose_model(self, horizon):
@@ -652,13 +667,14 @@ if __name__ == "__main__":
         while True:
             # Configure running options
             options = [
-                "Train",
-                "Load pretrained model",
-                "Diagnose model",
-                "Render some self play games",
-                "Play against MuZero",
-                "Test the game manually",
-                "Hyperparameter search",
+                "Train",  # 0
+                "Load pretrained model",  # 1
+                "Diagnose model",  # 2
+                "Render some self play games",  # 3
+                "Play against MuZero",  # 4
+                "Test the game manually",  # 5
+                "Hyperparameter search",  # 6
+                "Let MuZero play via API",  # 7
                 "Exit",
             ]
             print()
@@ -705,6 +721,29 @@ if __name__ == "__main__":
                     game_name, parametrization, budget, parallel_experiments, 20
                 )
                 muzero = MuZero(game_name, best_hyperparameters)
+            elif choice == 7:
+                # multiplayer game via API
+                if game_name != "hnefatafl_game":
+                    print("\nAPI only available for Hnefatafl")
+                else:
+                    game_id = input(
+                        "\nEnter id of game to join or just press enter to create new game"
+                    )
+
+                    APIClient().create_player(name="Robin & Djimon")
+                    if game_id == "":
+                        role = ""
+                        while role != "A" and role != "D":
+                            role = input(
+                                "\nWhat role do you want to play? Select [A,D]"
+                            )
+                        # create new game
+                        role = (
+                            PlayerRole.ATTACKER if role == "A" else PlayerRole.DEFENDER
+                        )
+                        game_id = APIClient().create_game(player_role=role)
+                    # join game
+                    APIClient().join_game(game_id=game_id)
             else:
                 break
             print("\nDone")

@@ -18,6 +18,7 @@ class ReplayBuffer:
         self.config = config
         self.buffer = copy.deepcopy(initial_buffer)
         self.num_played_games = initial_checkpoint["num_played_games"]
+        self.num_won_games = initial_checkpoint["num_won_games"]
         self.num_played_steps = initial_checkpoint["num_played_steps"]
         self.total_samples = sum(
             [len(game_history.root_values) for game_history in self.buffer.values()]
@@ -52,6 +53,15 @@ class ReplayBuffer:
 
         self.buffer[self.num_played_games] = game_history
         self.num_played_games += 1
+        # TODO_djimon: num_won_games
+        last_two_rewards = game_history.reward_history[-2:]
+        winner = -1
+        if self.reward_history[-1] > self.reward_history[-2]:
+            winner = game_history.to_play_history[-1]
+        else:
+            winner = game_history.to_play_history[-2]
+        if winner == 0:
+            self.num_won_games += 1
         self.num_played_steps += len(game_history.root_values)
         self.total_samples += len(game_history.root_values)
 
@@ -62,6 +72,7 @@ class ReplayBuffer:
 
         if shared_storage:
             shared_storage.set_info.remote("num_played_games", self.num_played_games)
+            shared_storage.set_info.remote("num_won_games", self.num_won_games)
             shared_storage.set_info.remote("num_played_steps", self.num_played_steps)
 
     def get_buffer(self):

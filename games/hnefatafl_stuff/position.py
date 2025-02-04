@@ -1,18 +1,21 @@
-from typing import List, Optional
+from pydantic import BaseModel
+from typing import TYPE_CHECKING, ClassVar, List, Optional
 from games.hnefatafl_stuff.direction import Direction
 from games.hnefatafl_stuff.piece_type import PieceType
 
+if TYPE_CHECKING:
+    from games.hnefatafl_stuff.types import Board
 
-class Position:
+
+class Position(BaseModel):
     """
     Represents a zero-based position on the board.
     """
 
-    INVALID = -1
+    x: int
+    y: int
 
-    def __init__(self, x: int, y: int):
-        self.x = x
-        self.y = y
+    INVALID: ClassVar[int] = -1
 
     def get_adjacent_position(self, direction: Direction, steps: int = 1) -> "Position":
         if direction == Direction.UP:
@@ -50,24 +53,28 @@ class Position:
         return hash((self.x, self.y))
 
     def up(self, steps: int = 1) -> "Position":
-        return Position(self.x, self.y + steps)
+        return Position(x=self.x, y=self.y + steps)
 
     def left(self, steps: int = 1) -> "Position":
-        return Position(self.x - steps, self.y)
+        return Position(x=self.x - steps, y=self.y)
 
     def right(self, steps: int = 1) -> "Position":
-        return Position(self.x + steps, self.y)
+        return Position(x=self.x + steps, y=self.y)
 
     def down(self, steps: int = 1) -> "Position":
-        return Position(self.x, self.y - steps)
+        return Position(x=self.x, y=self.y - steps)
 
-    def get_square(self, board: List[List[Optional[PieceType]]]) -> Optional[PieceType]:
+    def get_square(self, board: "Board") -> Optional[PieceType]:
+        from games.hnefatafl_stuff.types import Board
+
         if self.x < 0 or self.x >= len(board) or self.y < 0 or self.y >= len(board):
             return None
         return board[self.y][self.x]
 
     def set_square(
-        self, board: List[List[Optional[PieceType]]], piece: Optional[PieceType]
+        self,
+        board: "Board",
+        piece: Optional[PieceType],
     ) -> None:
         board[self.y][self.x] = piece
 
@@ -76,6 +83,13 @@ class Position:
         from games.hnefatafl_stuff.hnefatafl import Hnefatafl
 
         return 0 <= self.x < Hnefatafl.DIMENSION and 0 <= self.y < Hnefatafl.DIMENSION
+
+    def is_occupied(self, board: "Board") -> bool:
+        if not self.is_within_board():
+            return False
+        assert board is not None
+
+        return self.get_square(board=board) != None
 
     def is_open_to_piece(self, piece: PieceType) -> bool:
         """
@@ -100,3 +114,6 @@ class Position:
         from games.hnefatafl_stuff.hnefatafl import Hnefatafl
 
         return f"({chr(ord('A') + self.x)}{abs(self.y - Hnefatafl.DIMENSION)})"
+
+    def to_list(self) -> List[int]:
+        return [self.x, self.y]

@@ -27,11 +27,11 @@ class Hnefatafl:
     LOSS_REWARD = -100
 
     # Positions
-    MIDDLE = Position(3, 3)
-    UPPER_LEFT = Position(0, 0)
-    UPPER_RIGHT = Position(DIMENSION - 1, 0)
-    LOWER_LEFT = Position(0, DIMENSION - 1)
-    LOWER_RIGHT = Position(DIMENSION - 1, DIMENSION - 1)
+    MIDDLE = Position(x=3, y=3)
+    UPPER_LEFT = Position(x=0, y=0)
+    UPPER_RIGHT = Position(x=DIMENSION - 1, y=0)
+    LOWER_LEFT = Position(x=0, y=DIMENSION - 1)
+    LOWER_RIGHT = Position(x=DIMENSION - 1, y=DIMENSION - 1)
     CORNERS = [UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT]
     RESTRICTED_POSITIONS = [UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT, MIDDLE]
 
@@ -104,24 +104,23 @@ class Hnefatafl:
     def __init__(self, role=PlayerRole.ATTACKER):
         default_board = copy.deepcopy(Hnefatafl.DEFAULT_BOARD)
         self.board = copy.deepcopy(default_board)
-        self.player_role = role
-        self.current_player = PlayerRole.ATTACKER
+        self.current_player = role
 
     @classmethod
     def get_king(cls, board: Board) -> Position:
         for i in range(Hnefatafl.DIMENSION):
             for j in range(Hnefatafl.DIMENSION):
-                pos = Position(i, j)
+                pos = Position(x=i, y=j)
                 if pos.get_square(board=board) == PieceType.KING:
                     return pos
-        return Position(Position.INVALID, Position.INVALID)
+        return Position(x=Position.INVALID, y=Position.INVALID)
 
     @classmethod
     def get_attackers(cls, board: Board) -> List[Position]:
         attackers: List[Position] = []
         for i in range(Hnefatafl.DIMENSION):
             for j in range(Hnefatafl.DIMENSION):
-                pos = Position(i, j)
+                pos = Position(x=i, y=j)
                 if pos.get_square(board) == PieceType.ATTACKER:
                     attackers.append(pos)
         return attackers
@@ -131,14 +130,14 @@ class Hnefatafl:
         defenders: List[Position] = []
         for i in range(Hnefatafl.DIMENSION):
             for j in range(Hnefatafl.DIMENSION):
-                pos = Position(i, j)
+                pos = Position(x=i, y=j)
                 if pos.get_square(board) == PieceType.DEFENDER:
                     defenders.append(pos)
         return defenders
 
     def reset(self):
         self.board = copy.deepcopy(Hnefatafl.DEFAULT_BOARD)
-        self.player = PlayerRole.ATTACKER
+        self.current_player = PlayerRole.ATTACKER
         return Hnefatafl.get_observation(self.board)
 
     @classmethod
@@ -149,7 +148,7 @@ class Hnefatafl:
         observation = numpy.zeros((3, Hnefatafl.DIMENSION, Hnefatafl.DIMENSION))
         for i in range(Hnefatafl.DIMENSION):
             for j in range(Hnefatafl.DIMENSION):
-                pos = Position(i, j)
+                pos = Position(x=i, y=j)
                 if pos.get_square(board) == PieceType.ATTACKER:
                     observation[0, i, j] = 1
                 elif pos.get_square(board) == PieceType.DEFENDER:
@@ -158,8 +157,24 @@ class Hnefatafl:
                     observation[2, i, j] = 1
         return observation
 
+    @classmethod
+    def get_board_from_observation(cls, observation: numpy.ndarray) -> Board:
+        board: Board = copy.deepcopy(Hnefatafl.DEFAULT_BOARD)
+        for i in range(Hnefatafl.DIMENSION):
+            for j in range(Hnefatafl.DIMENSION):
+                pos = Position(x=i, y=j)
+                piece = None
+                if observation[0, i, j] == 1:
+                    piece = PieceType.ATTACKER
+                elif observation[1, i, j] == 1:
+                    piece = PieceType.DEFENDER
+                elif observation[2, i, j] == 1:
+                    piece = PieceType.KING
+                pos.set_square(board=board, piece=piece)
+        return board
+
     def to_play(self):
-        return 0 if self.player_role == 1 else 1
+        return 0 if self.current_player == PlayerRole.ATTACKER else 1
 
     @classmethod
     def get_possible_dests_from_pos(
@@ -179,35 +194,35 @@ class Hnefatafl:
         ):
             # move left
             k = 1
-            while (
-                start_pos.left(k).is_open_to_piece(piece_to_move)
-                and start_pos.left(k).get_square(board) is None
-            ):
-                dests.append(start_pos.left(k))
+            while start_pos.left(k).is_within_board() and not start_pos.left(
+                k
+            ).is_occupied(board=board):
+                if start_pos.left(k).is_open_to_piece(piece_to_move):
+                    dests.append(start_pos.left(k))
                 k += 1
             # move right
             k = 1
-            while (
-                start_pos.right(k).is_open_to_piece(piece_to_move)
-                and start_pos.right(k).get_square(board) is None
-            ):
-                dests.append(start_pos.right(k))
+            while start_pos.right(k).is_within_board() and not start_pos.right(
+                k
+            ).is_occupied(board=board):
+                if start_pos.right(k).is_open_to_piece(piece_to_move):
+                    dests.append(start_pos.right(k))
                 k += 1
             # move up
             k = 1
-            while (
-                start_pos.up(k).is_open_to_piece(piece_to_move)
-                and start_pos.up(k).get_square(board) is None
+            while start_pos.up(k).is_within_board() and not start_pos.up(k).is_occupied(
+                board=board
             ):
-                dests.append(start_pos.up(k))
+                if start_pos.up(k).is_open_to_piece(piece_to_move):
+                    dests.append(start_pos.up(k))
                 k += 1
             # move down
             k = 1
-            while (
-                start_pos.down(k).is_open_to_piece(piece_to_move)
-                and start_pos.down(k).get_square(board) is None
-            ):
-                dests.append(start_pos.down(k))
+            while start_pos.down(k).is_within_board() and not start_pos.down(
+                k
+            ).is_occupied(board=board):
+                if start_pos.down(k).is_open_to_piece(piece_to_move):
+                    dests.append(start_pos.down(k))
                 k += 1
         return dests
 
@@ -219,7 +234,7 @@ class Hnefatafl:
         moves: List[Move] = []  # start_pos, end_pos
         for i in range(Hnefatafl.DIMENSION):
             for j in range(Hnefatafl.DIMENSION):
-                pos: Position = Position(i, j)
+                pos: Position = Position(x=i, y=j)
                 if Hnefatafl.piece_belongs_to_player(
                     piece=pos.get_square(board), player=player
                 ):
@@ -253,6 +268,7 @@ class Hnefatafl:
         cls,
         board: Board,
         attackers: List[Position],
+        player: PlayerRole,
     ) -> Optional[Tuple[GameResult, PlayerRole]]:
         """
         Returns the game result along with the player if game was won.
@@ -273,9 +289,8 @@ class Hnefatafl:
         if king_captured:
             return GameResult.WIN, PlayerRole.ATTACKER
         # No Legal Moves -> handled in my_step
-        """if len(Hnefatafl.get_possible_moves(board=board, player=player)) == 0:
-            print("no legal moves left")
-            return GameResult.DRAW, None"""
+        if len(Hnefatafl.get_possible_moves(board=board, player=player)) == 0:
+            return GameResult.WIN, player.toggle()
         # All Attackers Are Eliminated
         if len(attackers) == 0:
             return GameResult.WIN, PlayerRole.DEFENDER
@@ -298,7 +313,7 @@ class Hnefatafl:
         _from, _to = action // Hnefatafl.DIMENSION**2, action % Hnefatafl.DIMENSION**2
         x0, y0 = _from // Hnefatafl.DIMENSION, _from % Hnefatafl.DIMENSION
         x1, y1 = _to // Hnefatafl.DIMENSION, _to % Hnefatafl.DIMENSION
-        return (Position(x0, y0), Position(x1, y1))
+        return (Position(x=x0, y=y0), Position(x=x1, y=y1))
 
     @classmethod
     def piece_captured(
@@ -515,13 +530,14 @@ class Hnefatafl:
         ):
             king_pos = Hnefatafl.get_king(board=board)
             king_pos.set_square(board=board, piece=None)
-            king_pos = Position(Position.INVALID, Position.INVALID)
+            king_pos = Position(x=Position.INVALID, y=Position.INVALID)
             return True, reward, board
 
         # check if game is over
         game_result, result_player = Hnefatafl.game_over(
             board=board,
             attackers=attackers,
+            player=player,
         )
         done = game_result != GameResult.ONGOING
         if game_result == GameResult.WIN:

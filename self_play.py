@@ -1,3 +1,4 @@
+import copy
 import math
 import time
 
@@ -5,7 +6,11 @@ import numpy
 import ray
 import torch
 
+from games.hnefatafl_stuff.api_client import APIClient, GameState
+from games.hnefatafl_stuff.hnefatafl import Hnefatafl
+from games.hnefatafl_stuff.position import Position
 import models
+from games.hnefatafl_stuff.types import Board, Move
 
 
 @ray.remote
@@ -113,6 +118,10 @@ class SelfPlay:
         """
         Play one game with actions based on the Monte Carlo tree search at each moves.
         """
+        from muzero import MuZero
+
+        print(f"MuZero Player: {muzero_player}")
+
         game_history = GameHistory()
         observation = self.game.reset()
         game_history.action_history.append(0)
@@ -150,11 +159,20 @@ class SelfPlay:
                     )
                     action = self.select_action(
                         root,
-                        temperature
-                        if not temperature_threshold
-                        or len(game_history.action_history) < temperature_threshold
-                        else 0,
+                        (
+                            temperature
+                            if not temperature_threshold
+                            or len(game_history.action_history) < temperature_threshold
+                            else 0
+                        ),
                     )
+
+                    # send to API if necessary
+                    if opponent == MuZero.OPPONENT_API:
+                        APIClient().wait_for_our_turn()
+                        APIClient().make_move(
+                            move=Hnefatafl.action_to_move(action=action)
+                        )
 
                     if render:
                         print(f'Tree depth: {mcts_info["max_tree_depth"]}')
@@ -189,6 +207,8 @@ class SelfPlay:
         """
         Select opponent action for evaluating MuZero level.
         """
+        from muzero import MuZero
+
         if opponent == "human":
             root, mcts_info = MCTS(self.config).run(
                 self.model,
@@ -214,10 +234,41 @@ class SelfPlay:
             ), "Legal actions should be a subset of the action space."
 
             return numpy.random.choice(self.game.legal_actions()), None
+        elif opponent == MuZero.OPPONENT_API:
+            # get opponent action from API
+            APIClient().wait_for_our_turn()
+            game_state: GameState = APIClient().get_game_state()
+            # deduce latest move from current board (see deduce_latest_move() in APIClient)
+            latest_observation = stacked_observations[-1]
+            previous_board = Hnefatafl.get_board_from_observation(
+                observation=latest_observation
+            )
+            move = APIClient.deduce_latest_move(
+                previous_board=previous_board,
+                current_board=game_state.board,
+            )
+            action = Hnefatafl.move_to_action(move)
+            return action, None
         else:
             raise NotImplementedError(
-                'Wrong argument: "opponent" argument should be "self", "human", "expert" or "random"'
+                'Wrong argument: "opponent" argument should be "self", "human", "expert", MuZero.OPPONENT_API or "random"'
             )
+
+    @staticmethod
+    def deduce_latest_move(previous_board: Board, current_board: Board) -> Move:
+        start_pos = Position.INVALID
+        end_pos = Position.INVALID
+        for i in range(Hnefatafl.DIMENSION):
+            for j in range(Hnefatafl.DIMENSION):
+                pos = Position(x=i, y=j)
+                if pos.get_square(board=previous_board) != pos.get_square(
+                    board=current_board
+                ):
+                    if pos.get_square(board=current_board) == None:
+                        start_pos = pos
+                    else:
+                        end_pos = pos
+        return (start_pos, end_pos)
 
     @staticmethod
     def select_action(node, temperature):
@@ -300,10 +351,10 @@ class MCTS:
                 set(self.config.action_space)
             ), "Legal actions should be a subset of the action space."
 
-
-            #mapping to indices for logits, does not work properly
-            legal_action_indices = [self.config.action_space.index(a) for a in legal_actions]
-            
+            # mapping to indices for logits, does not work properly
+            legal_action_indices = [
+                self.config.action_space.index(a) for a in legal_actions
+            ]
 
             root.expand(
                 legal_action_indices,
@@ -351,8 +402,9 @@ class MCTS:
             reward = models.support_to_scalar(reward, self.config.support_size).item()
 
             # Map action space to indices
-            action_indices = list(range(len(self.config.action_space)))  # Indices from 0 to len(action_space) - 1
-
+            action_indices = list(
+                range(len(self.config.action_space))
+            )  # Indices from 0 to len(action_space) - 1
 
             node.expand(
                 action_indices,
@@ -461,7 +513,9 @@ class Node:
             return 0
         return self.value_sum / self.visit_count
 
-    def expand(self, actions, action_space, to_play, reward, policy_logits, hidden_state):
+    def expand(
+        self, actions, action_space, to_play, reward, policy_logits, hidden_state
+    ):
         """
         We expand a node using the value, reward and policy prediction obtained from the
         neural network.
@@ -470,19 +524,18 @@ class Node:
         self.reward = reward
         self.hidden_state = hidden_state
 
-
         # Debugging
-        assert all(0 <= a < len(policy_logits[0]) for a in actions), "Action index out of bounds!"
-
+        assert all(
+            0 <= a < len(policy_logits[0]) for a in actions
+        ), "Action index out of bounds!"
 
         policy_values = torch.softmax(
             torch.tensor([policy_logits[0][a] for a in actions]), dim=0
         ).tolist()
 
-        #map indicies back to the original action values
+        # map indicies back to the original action values
         original_actions = [action_space[a] for a in actions]
         policy = {original_actions[i]: policy_values[i] for i in range(len(actions))}
-
 
         for action, p in policy.items():
             self.children[action] = Node(p)
@@ -505,6 +558,7 @@ class GameHistory:
     """
 
     def __init__(self):
+        self.result: int = 0  # 0=draw, 1=win, -1=loss
         self.observation_history = []
         self.action_history = []
         self.reward_history = []
@@ -522,9 +576,11 @@ class GameHistory:
             sum_visits = sum(child.visit_count for child in root.children.values())
             self.child_visits.append(
                 [
-                    root.children[a].visit_count / sum_visits
-                    if a in root.children
-                    else 0
+                    (
+                        root.children[a].visit_count / sum_visits
+                        if a in root.children
+                        else 0
+                    )
                     for a in action_space
                 ]
             )
